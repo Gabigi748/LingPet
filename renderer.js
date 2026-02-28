@@ -4,7 +4,7 @@ const dialogName = document.getElementById('dialog-name');
 const dialogText = document.getElementById('dialog-text');
 const msgInput = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
-const voiceBtn = document.getElementById('voice-btn');
+const voiceBtn = null;
 const historyBtn = document.getElementById('history-btn');
 const historyOverlay = document.getElementById('history-overlay');
 const historyMessages = document.getElementById('history-messages');
@@ -12,8 +12,6 @@ const historyClose = document.getElementById('history-close');
 
 let chatOpen = false;
 let chatHistory = [];
-let isRecording = false;
-let recognition = null;
 let typingTimer = null;
 let isComposing = false; // For CJK input method
 const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
@@ -179,66 +177,6 @@ historyClose.addEventListener('click', () => {
   historyOverlay.classList.remove('show');
 });
 
-// ========== Voice Input ==========
-function initVoice() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    voiceBtn.style.opacity = '0.3';
-    voiceBtn.title = 'Voice input is not supported in this environment';
-    voiceBtn.addEventListener('click', () => {
-      dialogText.textContent = 'Voice input is not available in Electron. Please type instead.';
-    });
-    return;
-  }
-  recognition = new SR();
-  recognition.lang = 'zh-TW';
-  recognition.continuous = false;
-  recognition.interimResults = true;
-
-  recognition.onresult = (e) => {
-    let transcript = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      transcript += e.results[i][0].transcript;
-    }
-    msgInput.value = transcript;
-    if (e.results[e.results.length - 1].isFinal) {
-      stopRecording();
-      sendMessage(transcript);
-    }
-  };
-  recognition.onerror = (e) => {
-    console.log('Speech error:', e.error);
-    stopRecording();
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-      dialogText.textContent = 'Voice input is not available in Electron. Please type instead.';
-      voiceBtn.style.opacity = '0.3';
-    }
-  };
-  recognition.onend = () => stopRecording();
-}
-
-function startRecording() {
-  if (!recognition) return;
-  isRecording = true;
-  voiceBtn.classList.add('recording');
-  recognition.start();
-}
-
-function stopRecording() {
-  isRecording = false;
-  voiceBtn.classList.remove('recording');
-  try { recognition?.stop(); } catch {}
-}
-
-voiceBtn.addEventListener('click', () => {
-  if (!chatOpen) {
-    chatOpen = true;
-    dialogBox.classList.add('show');
-  }
-  if (isRecording) stopRecording();
-  else startRecording();
-});
-
 // ========== Settings ==========
 const settingsPanel = document.getElementById('settings-panel');
 const settingsClose = document.getElementById('settings-close');
@@ -301,4 +239,3 @@ settingsSave.addEventListener('click', async () => {
 });
 
 // ========== Init ==========
-initVoice();
