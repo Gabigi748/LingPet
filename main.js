@@ -226,8 +226,11 @@ function callAPIWithImage(message, imageDataUrl) {
       'anthropic-version': '2023-06-01'
     };
     
-    // Some providers use x-api-key, some use Bearer token. Try x-api-key for anthropic proxies.
-    if (config.api?.apiKey) headers['x-api-key'] = config.api.apiKey;
+    // Some providers use x-api-key, some use Bearer token. Send both just in case.
+    if (config.api?.apiKey) {
+      headers['x-api-key'] = config.api.apiKey;
+      headers['Authorization'] = `Bearer ${config.api.apiKey}`;
+    }
 
     const req = mod.request(url, { method: 'POST', headers }, (res) => {
       let data = '';

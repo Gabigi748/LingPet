@@ -341,10 +341,13 @@ async function doScreenWatch() {
     if (!screenshot) return;
     
     // Step 2: Send screenshot to vision API (Anthropic format, bypasses gateway)
+    console.log('Sending screenshot to vision API...');
     const screenDesc = await window.mio.chatWithImage('describe screen', screenshot);
+    console.log('Vision description received:', screenDesc);
     if (!screenDesc) return;
     
     // Step 3: Send description to gateway (has memory + personality)
+    console.log('Sending description to gateway...');
     const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral].\nKeep reply concise, plain text only.]\n';
     const prompt = hint + `你看了一眼爸爸的螢幕，看到：${screenDesc}\n請用小澪的口吻自然地說一句話（如果沒什麼特別的就說 [skip]）`;
     
