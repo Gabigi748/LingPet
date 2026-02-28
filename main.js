@@ -197,35 +197,38 @@ function callAPI(message, history = []) {
   });
 }
 
-// Call API with image - bypasses gateway, calls provider directly (gateway doesn't support image_url)
-// Returns a text description of the image, to be passed to gateway for personality-aware response
+// Call API with image - bypasses gateway, calls provider directly
 function callAPIWithImage(message, imageDataUrl) {
-  return new Promise((resolve) => {
-    // Extract base64 and media type
+  return new Promise((resolve, reject) => {
     const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
     const mediaType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
 
-    // Try OpenAI-compatible format first (most providers support this)
+    // Format for Anthropic Messages API
     const body = JSON.stringify({
-      model: config.api?.model || 'gpt-4',
+      model: config.api?.model || 'claude-opus-4-6',
+      system: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.',
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' },
-          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' }
         ],
       }],
       max_tokens: 150,
     });
 
-    // Use gateway directly - let it handle the request
-    const endpoint = config.api?.endpoint || '/v1/chat/completions';
-    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
+    // Use provider URL directly for vision (not gateway)
+    const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'https://www.fucheers.top';
+    const url = new URL(providerBase + '/v1/messages');
     const mod = url.protocol === 'https:' ? https : http;
 
-    const headers = { 'Content-Type': 'application/json' };
-    if (config.api?.apiKey) headers['Authorization'] = `Bearer ${config.api.apiKey}`;
-    if (config.api?.user) headers['X-User'] = config.api.user + '-vision';
+    const headers = { 
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01'
+    };
+    
+    // Some providers use x-api-key, some use Bearer token. Try x-api-key for anthropic proxies.
+    if (config.api?.apiKey) headers['x-api-key'] = config.api.apiKey;
 
     const req = mod.request(url, { method: 'POST', headers }, (res) => {
       let data = '';
@@ -233,12 +236,11 @@ function callAPIWithImage(message, imageDataUrl) {
       res.on('end', () => {
         try {
           const json = JSON.parse(data);
-          resolve(json.choices?.[0]?.message?.content || null);
+          resolve(json.content?.[0]?.text || null);
         } catch { resolve(null); }
       });
     });
     req.on('error', () => resolve(null));
-    req.setTimeout(15000, () => { req.destroy(); resolve(null); });
     req.write(body);
     req.end();
   });
