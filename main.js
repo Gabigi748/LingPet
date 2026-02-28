@@ -114,13 +114,17 @@ function createWindow() {
 
   // Screenshot capture - get window titles for screen awareness
   ipcMain.handle('capture-screen', async () => {
+    console.log('[ScreenWatch] Capturing screen...');
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
       thumbnailSize: { width: 1280, height: 720 },
     });
     if (sources.length > 0) {
-      return sources[0].thumbnail.toDataURL();
+      const dataUrl = sources[0].thumbnail.toDataURL();
+      console.log('[ScreenWatch] Screenshot captured, size:', dataUrl.length);
+      return dataUrl;
     }
+    console.log('[ScreenWatch] No screen source found');
     return null;
   });
 
@@ -202,7 +206,12 @@ function callAPIWithImage(message, imageDataUrl) {
     const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
     const mediaType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
 
-    // Format for Anthropic Messages API
+    const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'https://www.fucheers.top';
+    const targetUrl = providerBase + '/v1/messages';
+    console.log('[ScreenWatch] Calling vision API:', targetUrl);
+    console.log('[ScreenWatch] Using model:', config.api?.model || 'claude-opus-4-6');
+    console.log('[ScreenWatch] API key set:', !!(config.api?.apiKey));
+
     const body = JSON.stringify({
       model: config.api?.model || 'claude-opus-4-6',
       system: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.',
@@ -216,17 +225,13 @@ function callAPIWithImage(message, imageDataUrl) {
       max_tokens: 150,
     });
 
-    // Use provider URL directly for vision (not gateway)
-    const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'https://www.fucheers.top';
-    const url = new URL(providerBase + '/v1/messages');
+    const url = new URL(targetUrl);
     const mod = url.protocol === 'https:' ? https : http;
 
     const headers = { 
       'Content-Type': 'application/json',
       'anthropic-version': '2023-06-01'
     };
-    
-    // Some providers use x-api-key, some use Bearer token. Send both just in case.
     if (config.api?.apiKey) {
       headers['x-api-key'] = config.api.apiKey;
       headers['Authorization'] = `Bearer ${config.api.apiKey}`;
@@ -234,15 +239,20 @@ function callAPIWithImage(message, imageDataUrl) {
 
     const req = mod.request(url, { method: 'POST', headers }, (res) => {
       let data = '';
+      console.log('[ScreenWatch] Vision API response status:', res.statusCode);
       res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
+        console.log('[ScreenWatch] Vision API raw response:', data.substring(0, 200));
         try {
           const json = JSON.parse(data);
           resolve(json.content?.[0]?.text || null);
         } catch { resolve(null); }
       });
     });
-    req.on('error', () => resolve(null));
+    req.on('error', (e) => {
+      console.log('[ScreenWatch] Vision API error:', e.message);
+      resolve(null);
+    });
     req.write(body);
     req.end();
   });
