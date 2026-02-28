@@ -117,7 +117,10 @@ function cleanReply(text) {
   return text || '...';
 }
 
+let emotionTimer = null;
+
 async function setEmotion(emotion) {
+  if (emotionTimer) clearTimeout(emotionTimer);
   const assets = await window.mio.listEmotions();
   const found = assets.find(a => a.name === emotion);
   if (found) {
@@ -132,6 +135,17 @@ async function setEmotion(emotion) {
   }
   petImg.classList.add('emotion-change');
   setTimeout(() => petImg.classList.remove('emotion-change'), 400);
+  
+  // Return to default after 5 seconds
+  if (emotion !== 'default') {
+    emotionTimer = setTimeout(async () => {
+      const def = assets.find(a => a.name === 'default');
+      if (def) {
+        const p = await window.mio.getAssetPath(def.file);
+        petImg.src = p + '?t=' + Date.now();
+      }
+    }, 5000);
+  }
 }
 
 // ========== Send Message ==========
@@ -180,6 +194,10 @@ async function sendMessage(text) {
 }
 
 sendBtn.addEventListener('click', () => sendMessage(msgInput.value));
+
+// Settings button in dialog
+const settingsBtn = document.getElementById('settings-btn');
+settingsBtn.addEventListener('click', () => openSettings());
 
 // CJK input method composing detection
 msgInput.addEventListener('compositionstart', () => { isComposing = true; });
