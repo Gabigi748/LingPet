@@ -86,8 +86,8 @@ function parseEmotion(text) {
 
 // Clean internal directives from gateway responses
 function cleanReply(text) {
-  // Remove sticker tags like [sticker:xxx]
-  text = text.replace(/\[sticker:[\w-]+\]/g, '').trim();
+  // Remove sticker tags like [sticker:xxx] in any format
+  text = text.replace(/\[sticker\s*:\s*[\w-]+\s*\]/gi, '').trim();
   // Remove reply tags
   text = text.replace(/\[\[reply_to[^\]]*\]\]/g, '').trim();
   // Remove lines that look like internal agent instructions or errors

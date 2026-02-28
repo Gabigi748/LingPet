@@ -137,9 +137,11 @@ function callAPI(message, history = []) {
     let body;
     if (isGateway) {
       // Gateway mode: just send the message, gateway manages session/history
+      // Add hint to not use stickers (desktop pet doesn't support them)
+      const hint = '[Context: This message is from the desktop pet app. Do not use [sticker:] tags or emoji stickers in your reply. Reply with plain text only. Keep replies concise.]';
       body = JSON.stringify({
         model: config.api?.model || 'gpt-4',
-        messages: [{ role: 'user', content: message }],
+        messages: [{ role: 'user', content: hint + '\n' + message }],
         max_tokens: 1024,
       });
     } else {
