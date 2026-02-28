@@ -244,7 +244,6 @@ async function openSettings() {
   document.getElementById('cfg-user').value = cfg.api?.user || '';
   document.getElementById('cfg-name').value = cfg.pet?.name || '';
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
-  document.getElementById('cfg-lang').value = cfg.voice?.lang || 'zh-TW';
   document.getElementById('cfg-screen-enabled').checked = cfg.screenWatch?.enabled || false;
   document.getElementById('cfg-screen-interval').value = cfg.screenWatch?.intervalMin || 5;
 
@@ -283,7 +282,7 @@ settingsSave.addEventListener('click', async () => {
     },
     voice: {
       enabled: true,
-      lang: document.getElementById('cfg-lang').value,
+      lang: 'zh-TW',
     },
     screenWatch: {
       enabled: document.getElementById('cfg-screen-enabled').checked,
