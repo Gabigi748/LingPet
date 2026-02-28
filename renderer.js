@@ -14,6 +14,7 @@ let chatHistory = [];
 let typingTimer = null;
 let isComposing = false; // For CJK input method
 let isSending = false; // Prevent double send
+let lastReply = ''; // Prevent duplicate replies
 const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
 const DEFAULT_EMOTION = 'neutral';
 
@@ -91,13 +92,18 @@ function cleanReply(text) {
   text = text.replace(/\[\[reply_to[^\]]*\]\]/g, '').trim();
   // Remove lines that look like internal agent instructions or errors
   const filterPatterns = [
-    /^(let me |reading |Read |I'll |I need to |checking ).*/i,
-    /^(HEARTBEAT|NO_REPLY|SOUL\.md|MEMORY\.md|AGENTS\.md|USER\.md|TOOLS\.md|HEARTBEAT\.md).*/,
+    /^(let me |reading |Read |I'll |I need to |checking |looking |scanning |searching ).*/i,
+    /^(HEARTBEAT|NO_REPLY|SOUL\.md|MEMORY\.md|AGENTS\.md|USER\.md|TOOLS\.md|HEARTBEAT\.md|IDENTITY\.md|BOOTSTRAP\.md).*/,
     /^message failed:.*/i,
     /^action send.*/i,
     /^requires a target.*/i,
     /^\[System.*/,
     /^Source: .*/,
+    /^NO_REPLY$/,
+    /^HEARTBEAT_OK$/,
+    /^memory_search|^memory_get/,
+    /tool_call|function_call/i,
+    /^\*?(reads?|opens?|checks?|loads?|scans?)\s/i,
   ];
   const lines = text.split('\n');
   const cleaned = lines.filter(line => {
@@ -106,6 +112,8 @@ function cleanReply(text) {
     return !filterPatterns.some(p => p.test(trimmed));
   });
   text = cleaned.join('\n').trim();
+  
+  // If after cleaning, text is same as previous reply, return empty
   return text || '...';
 }
 
@@ -143,6 +151,13 @@ async function sendMessage(text) {
     const reply = await window.mio.chat(text, chatHistory);
     const { emotion, cleanText } = parseEmotion(reply);
     const displayText = cleanReply(cleanText);
+
+    // Skip if same as last reply (duplicate detection)
+    if (displayText === lastReply && displayText !== '...') {
+      isSending = false;
+      return;
+    }
+    lastReply = displayText;
 
     // Get pet name
     const cfg = await window.mio.getConfig();
