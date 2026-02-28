@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>小澪桌寵</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      user-select: none;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    }
+
+    #pet-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    /* Chat bubble */
+    #chat-bubble {
+      display: none;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      max-height: 200px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #333;
+      z-index: 10;
+    }
+    #chat-bubble.show { display: block; }
+    #chat-bubble::-webkit-scrollbar { width: 4px; }
+    #chat-bubble::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+    .chat-msg {
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+    .chat-msg.user {
+      background: #e3f2fd;
+      margin-left: auto;
+      text-align: right;
+    }
+    .chat-msg.bot {
+      background: #fce4ec;
+      margin-right: auto;
+    }
+    .chat-msg.thinking {
+      background: #f5f5f5;
+      color: #999;
+      font-style: italic;
+    }
+
+    /* Pet image */
+    #pet-img {
+      max-width: 280px;
+      max-height: 300px;
+      object-fit: contain;
+      cursor: pointer;
+      -webkit-app-region: drag;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+    #pet-img:hover { transform: scale(1.03); }
+
+    /* Input bar */
+    #input-bar {
+      display: none;
+      width: 100%;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 0 0 16px 16px;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    #input-bar.show { display: flex; }
+
+    #msg-input {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 13px;
+      outline: none;
+      -webkit-app-region: no-drag;
+    }
+    #msg-input:focus { border-color: #f48fb1; }
+
+    #voice-btn, #send-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: no-drag;
+      transition: background 0.2s;
+    }
+    #voice-btn {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    #voice-btn:hover { background: #bbdefb; }
+    #voice-btn.recording {
+      background: #ef5350;
+      color: white;
+      animation: pulse 1s infinite;
+    }
+    #send-btn {
+      background: #f48fb1;
+      color: white;
+    }
+    #send-btn:hover { background: #f06292; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Settings Panel */
+    #settings-panel {
+      display: none;
+      position: absolute;
+      top: 10px; left: 10px; right: 10px; bottom: 10px;
+      background: rgba(255,255,255,0.97);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      z-index: 100;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #settings-panel.show { display: flex; }
+    .settings-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      font-weight: bold; font-size: 14px;
+      -webkit-app-region: no-drag;
+    }
+    .settings-header button {
+      background: none; border: none; font-size: 18px; cursor: pointer;
+      -webkit-app-region: no-drag;
+    }
+    .settings-body {
+      padding: 12px 16px; overflow-y: auto; flex: 1;
+      display: flex; flex-direction: column; gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+    .settings-body label { font-size: 12px; color: #666; margin-top: 4px; }
+    .settings-body input, .settings-body textarea {
+      border: 1px solid #ddd; border-radius: 8px;
+      padding: 8px 10px; font-size: 13px; outline: none;
+      font-family: inherit;
+    }
+    .settings-body input:focus, .settings-body textarea:focus { border-color: #f48fb1; }
+    #settings-save {
+      margin-top: 8px; padding: 10px;
+      background: #f48fb1; color: white; border: none;
+      border-radius: 10px; font-size: 14px; cursor: pointer;
+    }
+    #settings-save:hover { background: #f06292; }
+  </style>
+</head>
+<body>
+  <div id="pet-container">
+    <div id="chat-bubble"></div>
+    <img id="pet-img" src="assets/default.png" alt="小澪" />
+    <div id="input-bar">
+      <button id="voice-btn" title="語音輸入">🎤</button>
+      <input id="msg-input" type="text" placeholder="跟我說話..." />
+      <button id="send-btn" title="送出">➤</button>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel">
+      <div class="settings-header">
+        <span>設定 / Settings</span>
+        <button id="settings-close">✕</button>
+      </div>
+      <div class="settings-body">
+        <label>API Base URL</label>
+        <input id="cfg-url" type="text" placeholder="http://localhost:3000" />
+        <label>API Key</label>
+        <input id="cfg-key" type="password" placeholder="your-api-key" />
+        <label>Model</label>
+        <input id="cfg-model" type="text" placeholder="model-name" />
+        <label>Pet Name</label>
+        <input id="cfg-name" type="text" placeholder="My Pet" />
+        <label>System Prompt</label>
+        <textarea id="cfg-prompt" rows="3" placeholder="Describe your pet's personality..."></textarea>
+        <label>Voice Language</label>
+        <input id="cfg-lang" type="text" placeholder="zh-TW" />
+        <button id="settings-save">儲存 / Save</button>
+      </div>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "api": {
+    "baseUrl": "http://localhost:3000",
+    "apiKey": "your-api-key-here",
+    "model": "your-model-name"
+  },
+  "pet": {
+    "name": "My Pet",
+    "systemPrompt": "You are a cute desktop pet assistant. Be helpful and friendly.",
+    "width": 400,
+    "height": 600
+  },
+  "voice": {
+    "enabled": true,
+    "lang": "zh-TW"
+  }
+}
