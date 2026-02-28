@@ -115,14 +115,13 @@ function createWindow() {
   // Screenshot capture - get window titles for screen awareness
   ipcMain.handle('capture-screen', async () => {
     const sources = await desktopCapturer.getSources({
-      types: ['window', 'screen'],
-      thumbnailSize: { width: 1, height: 1 }, // tiny, we only need titles
+      types: ['screen'],
+      thumbnailSize: { width: 1280, height: 720 },
     });
-    // Return list of window titles
-    const titles = sources
-      .map(s => s.name)
-      .filter(n => n && n.trim() && n !== 'Entire Screen' && !n.startsWith('Screen '));
-    return titles.length > 0 ? titles.join(', ') : null;
+    if (sources.length > 0) {
+      return sources[0].thumbnail.toDataURL();
+    }
+    return null;
   });
 
   // Chat with image (for screen recognition)
