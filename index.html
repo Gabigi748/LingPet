@@ -27,12 +27,13 @@
     /* Pet image */
     #pet-img {
       max-width: 280px;
-      max-height: 300px;
+      max-height: 480px;
       object-fit: contain;
       cursor: pointer;
       transition: transform 0.3s ease;
       flex-shrink: 0;
       z-index: 1;
+      margin-bottom: 0;
     }
     #pet-img:hover { transform: scale(1.03); }
     #pet-img.breathing {
@@ -55,14 +56,19 @@
     /* ========== Galgame Dialog Box ========== */
     #dialog-box {
       display: none;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
       width: 100%;
-      background: linear-gradient(180deg, rgba(10,10,30,0.85) 0%, rgba(20,20,50,0.92) 100%);
-      border-top: 2px solid rgba(180,160,255,0.4);
+      background: linear-gradient(180deg, rgba(10,10,30,0.75) 0%, rgba(20,20,50,0.85) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-top: 1.5px solid rgba(180,160,255,0.3);
       border-radius: 12px 12px 0 0;
       padding: 0;
       z-index: 10;
-      flex-shrink: 0;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
     }
     #dialog-box.show { display: block; }
 
