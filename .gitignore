@@ -4,3 +4,4 @@ dist/
 .DS_Store
 Thumbs.db
 assets/mio_backup.png
+.window-position.json

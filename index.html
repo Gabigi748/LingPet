@@ -35,6 +35,13 @@
       z-index: 1;
     }
     #pet-img:hover { transform: scale(1.03); }
+    #pet-img.breathing {
+      animation: breathe 3.5s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.02) translateY(-3px); }
+    }
     #pet-img.emotion-change {
       animation: emotionBounce 0.4s ease;
     }
@@ -343,8 +350,14 @@
         <input id="cfg-name" type="text" placeholder="My Pet" />
         <label>System Prompt</label>
         <textarea id="cfg-prompt" rows="3" placeholder="Describe your pet's personality..."></textarea>
-        <label>Voice Language</label>
-        <input id="cfg-lang" type="text" placeholder="zh-TW" />
+        <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Screen Watch</label>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+          <input id="cfg-screen-enabled" type="checkbox" style="width:16px;height:16px;" />
+          <span style="font-size:12px;color:#666;">Enable screen recognition (auto comment)</span>
+        </div>
+        <label>Interval (minutes)</label>
+        <input id="cfg-screen-interval" type="number" min="1" max="60" value="5" style="width:80px;" />
         <div class="settings-divider"></div>
         <label style="font-weight:bold;font-size:13px;">Emotion Artwork</label>
         <p style="font-size:11px;color:#999;margin:2px 0 6px;">

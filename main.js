@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, screen, ipcMain, desktopCapturer } = require('electron');
 const path = require('path');
 const https = require('https');
 const http = require('http');
@@ -7,6 +7,15 @@ const fs = require('fs');
 
 let mainWindow = null;
 let tray = null;
+const positionFile = path.join(__dirname, '.window-position.json');
+
+// Save/load window position
+function saveWindowPosition(x, y) {
+  try { fs.writeFileSync(positionFile, JSON.stringify({ x, y })); } catch {}
+}
+function loadWindowPosition() {
+  try { return JSON.parse(fs.readFileSync(positionFile, 'utf8')); } catch { return null; }
+}
 
 // Load config from config.json
 function loadConfig() {
@@ -26,12 +35,15 @@ let config = loadConfig();
 
 function createWindow() {
   const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+  const savedPos = loadWindowPosition();
+  const defaultX = screenW - (config.pet?.width || 400) - 20;
+  const defaultY = screenH - (config.pet?.height || 600) - 20;
 
   mainWindow = new BrowserWindow({
     width: config.pet?.width || 400,
     height: config.pet?.height || 600,
-    x: screenW - (config.pet?.width || 400) - 20,
-    y: screenH - (config.pet?.height || 600) - 20,
+    x: savedPos?.x ?? defaultX,
+    y: savedPos?.y ?? defaultY,
     transparent: true,
     frame: false,
     resizable: false,
@@ -68,6 +80,9 @@ function createWindow() {
 
   ipcMain.on('drag-end', () => {
     dragOffset = null;
+    // Save window position
+    const [x, y] = mainWindow.getPosition();
+    saveWindowPosition(x, y);
   });
 
   // Chat API handler
@@ -95,6 +110,23 @@ function createWindow() {
 
   ipcMain.handle('get-asset-path', (_, filename) => {
     return path.join(__dirname, 'assets', filename);
+  });
+
+  // Screenshot capture for screen recognition
+  ipcMain.handle('capture-screen', async () => {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: 1280, height: 720 },
+    });
+    if (sources.length > 0) {
+      return sources[0].thumbnail.toDataURL();
+    }
+    return null;
+  });
+
+  // Chat with image (for screen recognition)
+  ipcMain.handle('chat-with-image', async (_, message, imageDataUrl) => {
+    return callAPIWithImage(message, imageDataUrl);
   });
 }
 
@@ -158,6 +190,48 @@ function callAPI(message, history = []) {
     });
 
     req.on('error', (e) => reject(e.message));
+    req.write(body);
+    req.end();
+  });
+}
+
+// Call API with image (for screen recognition)
+function callAPIWithImage(message, imageDataUrl) {
+  return new Promise((resolve, reject) => {
+    const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
+    const mediaType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
+
+    const body = JSON.stringify({
+      model: config.api?.model || 'gpt-4',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: message },
+          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
+        ],
+      }],
+      max_tokens: 512,
+    });
+
+    const endpoint = config.api?.endpoint || '/v1/chat/completions';
+    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
+    const mod = url.protocol === 'https:' ? https : http;
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (config.api?.apiKey) headers['Authorization'] = `Bearer ${config.api.apiKey}`;
+    if (config.api?.user) headers['X-User'] = config.api.user;
+
+    const req = mod.request(url, { method: 'POST', headers }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve(json.choices?.[0]?.message?.content || null);
+        } catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
     req.write(body);
     req.end();
   });

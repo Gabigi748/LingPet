@@ -16,6 +16,10 @@
     "enabled": true,
     "lang": "zh-TW"
   },
+  "screenWatch": {
+    "enabled": false,
+    "intervalMin": 5
+  },
   "_note": "For OpenClaw gateway: set endpoint to /api/gateway/chat, leave apiKey empty, set user to your session user id",
   "_emotions_note": "Place emotion artwork in assets/ folder: happy.png, sad.png, angry.png, shy.png, surprised.png, thinking.png, sleepy.png, neutral.png, default.png"
 }

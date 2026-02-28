@@ -227,6 +227,8 @@ async function openSettings() {
   document.getElementById('cfg-name').value = cfg.pet?.name || '';
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
   document.getElementById('cfg-lang').value = cfg.voice?.lang || 'zh-TW';
+  document.getElementById('cfg-screen-enabled').checked = cfg.screenWatch?.enabled || false;
+  document.getElementById('cfg-screen-interval').value = cfg.screenWatch?.intervalMin || 5;
 
   const assets = await window.mio.listEmotions();
   const grid = document.getElementById('emotion-grid');
@@ -265,10 +267,94 @@ settingsSave.addEventListener('click', async () => {
       enabled: true,
       lang: document.getElementById('cfg-lang').value,
     },
+    screenWatch: {
+      enabled: document.getElementById('cfg-screen-enabled').checked,
+      intervalMin: parseInt(document.getElementById('cfg-screen-interval').value) || 5,
+    },
   };
   await window.mio.saveConfig(newConfig);
   dialogName.textContent = newConfig.pet.name || 'Pet';
+  
+  // Toggle screen watch
+  if (newConfig.screenWatch.enabled) {
+    startScreenWatch();
+  } else {
+    stopScreenWatch();
+  }
+  
   settingsPanel.classList.remove('show');
 });
 
 // ========== Init ==========
+// Start breathing animation
+petImg.classList.add('breathing');
+
+// Stop breathing during emotion change
+const origSetEmotion = setEmotion;
+setEmotion = async function(emotion) {
+  petImg.classList.remove('breathing');
+  await origSetEmotion(emotion);
+  setTimeout(() => petImg.classList.add('breathing'), 500);
+};
+
+// ========== Screen Recognition ==========
+let screenWatchInterval = null;
+let screenWatchEnabled = false;
+
+async function startScreenWatch() {
+  const cfg = await window.mio.getConfig();
+  const intervalMin = cfg.screenWatch?.intervalMin || 5;
+  
+  if (screenWatchInterval) clearInterval(screenWatchInterval);
+  screenWatchEnabled = true;
+  
+  screenWatchInterval = setInterval(async () => {
+    if (!screenWatchEnabled || isSending) return;
+    try {
+      const screenshot = await window.mio.captureScreen();
+      if (!screenshot) return;
+      
+      const prompt = cfg.screenWatch?.prompt || 
+        'You are a desktop pet watching the user\'s screen. If you see something interesting, comment on it briefly and naturally in Traditional Chinese. If nothing notable, reply with just: [skip]';
+      
+      const reply = await window.mio.chatWithImage(prompt, screenshot);
+      if (!reply || reply.includes('[skip]') || reply.trim().length < 2) return;
+      
+      const { emotion, cleanText } = parseEmotion(reply);
+      const displayText = cleanReply(cleanText);
+      if (displayText === '...' || displayText === lastReply) return;
+      
+      lastReply = displayText;
+      
+      // Show dialog if hidden
+      if (!chatOpen) {
+        chatOpen = true;
+        dialogBox.classList.add('show');
+      }
+      
+      const petCfg = await window.mio.getConfig();
+      dialogName.textContent = petCfg.pet?.name || 'Pet';
+      typewrite(displayText);
+      setEmotion(emotion);
+      
+      chatHistory.push({ role: 'assistant', content: reply });
+      if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+    } catch (e) {
+      console.log('Screen watch error:', e);
+    }
+  }, intervalMin * 60 * 1000);
+}
+
+function stopScreenWatch() {
+  screenWatchEnabled = false;
+  if (screenWatchInterval) {
+    clearInterval(screenWatchInterval);
+    screenWatchInterval = null;
+  }
+}
+
+// Init screen watch from config
+(async () => {
+  const cfg = await window.mio.getConfig();
+  if (cfg.screenWatch?.enabled) startScreenWatch();
+})();
