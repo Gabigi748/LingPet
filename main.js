@@ -197,6 +197,7 @@ function callAPI(message, history = []) {
 }
 
 // Call API with image - bypasses gateway, calls provider directly (gateway doesn't support image_url)
+// Returns a text description of the image, to be passed to gateway for personality-aware response
 function callAPIWithImage(message, imageDataUrl) {
   return new Promise((resolve, reject) => {
     const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
@@ -205,19 +206,16 @@ function callAPIWithImage(message, imageDataUrl) {
     const body = JSON.stringify({
       model: config.api?.model || 'gpt-4',
       messages: [{
-        role: 'system',
-        content: 'You are a cute desktop pet. Respond briefly in Traditional Chinese. Start with an emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Do NOT use [sticker:] tags.',
-      }, {
         role: 'user',
         content: [
-          { type: 'text', text: message },
+          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual. Focus on what the user is doing or viewing.' },
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
         ],
       }],
-      max_tokens: 256,
+      max_tokens: 150,
     });
 
-    // Always use provider URL directly for vision (not gateway)
+    // Use provider URL directly for vision (not gateway)
     const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'http://localhost:3000';
     const url = new URL(providerBase + '/v1/chat/completions');
     const mod = url.protocol === 'https:' ? https : http;

@@ -339,11 +339,16 @@ async function doScreenWatch() {
     const screenshot = await window.mio.captureScreen();
     if (!screenshot) return;
     
-    const cfg = await window.mio.getConfig();
-    const prompt = cfg.screenWatch?.prompt || 
-      'You are a desktop pet watching the user\'s screen. If you see something interesting, comment on it briefly and naturally in Traditional Chinese. If nothing notable, reply with just: [skip]';
+    // Step 1: Use vision API to describe screen (no memory needed)
+    const screenDesc = await window.mio.chatWithImage('describe screen', screenshot);
+    if (!screenDesc) return;
     
-    const reply = await window.mio.chatWithImage(prompt, screenshot);
+    // Step 2: Send description to gateway (has memory + personality)
+    const cfg = await window.mio.getConfig();
+    const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral].\nKeep reply concise, plain text only.]\n';
+    const prompt = hint + `你看了一眼爸爸的螢幕，看到：${screenDesc}\n請用小澪的口吻自然地說一句話（如果沒什麼特別的就說 [skip]）`;
+    
+    const reply = await window.mio.chat(prompt, []);
     if (!reply || reply.includes('[skip]') || reply.trim().length < 2) return;
     
     const { emotion, cleanText } = parseEmotion(reply);
@@ -352,14 +357,12 @@ async function doScreenWatch() {
     
     lastReply = displayText;
     
-    // Show dialog if hidden
     if (!chatOpen) {
       chatOpen = true;
       dialogBox.classList.add('show');
     }
     
-    const petCfg = await window.mio.getConfig();
-    dialogName.textContent = petCfg.pet?.name || 'Pet';
+    dialogName.textContent = cfg.pet?.name || 'Pet';
     typewrite(displayText);
     setEmotion(emotion);
     
