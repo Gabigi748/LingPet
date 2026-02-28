@@ -70,12 +70,38 @@ npm start
 
 LingPet works with any OpenAI-compatible chat completions API.
 
-If you're running [OpenClaw](https://github.com/openclaw/openclaw):
+### Option 1: OpenClaw Gateway (Recommended)
 
-1. Your OpenClaw gateway exposes a chat completions endpoint
-2. Set `baseUrl` to your gateway URL
-3. Set `apiKey` to your gateway token
-4. Set `model` to your configured model name
+Connect directly to your OpenClaw gateway for full memory, personality, and session support.
+
+```json
+{
+  "api": {
+    "baseUrl": "http://your-server-ip",
+    "endpoint": "/api/gateway/chat",
+    "apiKey": "",
+    "model": "your-model-name",
+    "user": "your-session-user"
+  }
+}
+```
+
+This way your desktop pet shares the same session as your other OpenClaw interfaces (QQ bot, PWA, etc.), with full memory and personality.
+
+### Option 2: Direct API
+
+Use any OpenAI-compatible API endpoint directly. The pet manages its own conversation history locally.
+
+```json
+{
+  "api": {
+    "baseUrl": "https://api.openai.com",
+    "endpoint": "/v1/chat/completions",
+    "apiKey": "sk-...",
+    "model": "gpt-4"
+  }
+}
+```
 
 ## Usage
 

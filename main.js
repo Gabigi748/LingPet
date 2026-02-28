@@ -82,29 +82,49 @@ function createWindow() {
 
 function callAPI(message, history = []) {
   return new Promise((resolve, reject) => {
-    const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Example: "[happy] 好開心呀！". Always include exactly one tag at the very start.';
+    const isGateway = (config.api?.endpoint || '').includes('gateway');
 
-    const messages = [
-      { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
-      ...history,
-      { role: 'user', content: message },
-    ];
+    let body;
+    if (isGateway) {
+      // Gateway mode: just send the message, gateway manages session/history
+      body = JSON.stringify({
+        model: config.api?.model || 'gpt-4',
+        messages: [{ role: 'user', content: message }],
+        max_tokens: 1024,
+      });
+    } else {
+      // Direct API mode: send full history
+      const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Example: "[happy] 好開心呀！". Always include exactly one tag at the very start.';
+      body = JSON.stringify({
+        model: config.api?.model || 'gpt-4',
+        messages: [
+          { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
+          ...history,
+          { role: 'user', content: message },
+        ],
+        max_tokens: 1024,
+      });
+    }
 
-    const body = JSON.stringify({
-      model: config.api?.model || 'gpt-4',
-      messages,
-      max_tokens: 1024,
-    });
-
-    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + '/v1/chat/completions');
+    const endpoint = config.api?.endpoint || '/v1/chat/completions';
+    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
     const mod = url.protocol === 'https:' ? https : http;
+
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    // Only add Authorization if apiKey is set
+    if (config.api?.apiKey) {
+      headers['Authorization'] = `Bearer ${config.api.apiKey}`;
+    }
+    // Add user header for OpenClaw gateway session routing
+    if (config.api?.user) {
+      headers['X-User'] = config.api.user;
+    }
 
     const req = mod.request(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.api?.apiKey || ''}`,
-      },
+      headers,
     }, (res) => {
       let data = '';
       res.on('data', (chunk) => data += chunk);

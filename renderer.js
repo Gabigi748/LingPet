@@ -154,8 +154,10 @@ const settingsSave = document.getElementById('settings-save');
 async function openSettings() {
   const cfg = await window.mio.getConfig();
   document.getElementById('cfg-url').value = cfg.api?.baseUrl || '';
+  document.getElementById('cfg-endpoint').value = cfg.api?.endpoint || '/v1/chat/completions';
   document.getElementById('cfg-key').value = cfg.api?.apiKey || '';
   document.getElementById('cfg-model').value = cfg.api?.model || '';
+  document.getElementById('cfg-user').value = cfg.api?.user || '';
   document.getElementById('cfg-name').value = cfg.pet?.name || '';
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
   document.getElementById('cfg-lang').value = cfg.voice?.lang || 'zh-TW';
@@ -188,8 +190,10 @@ settingsSave.addEventListener('click', async () => {
   const newConfig = {
     api: {
       baseUrl: document.getElementById('cfg-url').value,
+      endpoint: document.getElementById('cfg-endpoint').value,
       apiKey: document.getElementById('cfg-key').value,
       model: document.getElementById('cfg-model').value,
+      user: document.getElementById('cfg-user').value,
     },
     pet: {
       name: document.getElementById('cfg-name').value,

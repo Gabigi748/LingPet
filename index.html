@@ -234,10 +234,14 @@
       <div class="settings-body">
         <label>API Base URL</label>
         <input id="cfg-url" type="text" placeholder="http://localhost:3000" />
-        <label>API Key</label>
+        <label>API Endpoint</label>
+        <input id="cfg-endpoint" type="text" placeholder="/v1/chat/completions" />
+        <label>API Key (leave empty for gateway)</label>
         <input id="cfg-key" type="password" placeholder="your-api-key" />
         <label>Model</label>
         <input id="cfg-model" type="text" placeholder="model-name" />
+        <label>User (for OpenClaw gateway session)</label>
+        <input id="cfg-user" type="text" placeholder="e.g. my-pet" />
         <label>Pet Name</label>
         <input id="cfg-name" type="text" placeholder="My Pet" />
         <label>System Prompt</label>
