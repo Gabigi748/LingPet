@@ -245,7 +245,9 @@ function callAPIWithImage(message, imageDataUrl) {
         console.log('[ScreenWatch] Vision API raw response:', data.substring(0, 200));
         try {
           const json = JSON.parse(data);
-          resolve(json.content?.[0]?.text || null);
+          // Handle extended thinking: find the text block (not thinking block)
+          const textBlock = json.content?.find(b => b.type === 'text');
+          resolve(textBlock?.text || null);
         } catch { resolve(null); }
       });
     });
