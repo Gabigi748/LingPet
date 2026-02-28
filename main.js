@@ -65,12 +65,27 @@ function createWindow() {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     return true;
   });
+
+  // Emotion artwork handlers
+  ipcMain.handle('list-emotions', () => {
+    const dir = path.join(__dirname, 'assets');
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f))
+      .map(f => ({ name: f.replace(/\.[^.]+$/, ''), file: f }));
+  });
+
+  ipcMain.handle('get-asset-path', (_, filename) => {
+    return path.join(__dirname, 'assets', filename);
+  });
 }
 
 function callAPI(message, history = []) {
   return new Promise((resolve, reject) => {
+    const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Example: "[happy] 好開心呀！". Always include exactly one tag at the very start.';
+
     const messages = [
-      { role: 'system', content: config.pet?.systemPrompt || 'You are a helpful desktop pet.' },
+      { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
       ...history,
       { role: 'user', content: message },
     ];

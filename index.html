@@ -79,6 +79,15 @@
       flex-shrink: 0;
     }
     #pet-img:hover { transform: scale(1.03); }
+    #pet-img.emotion-change {
+      animation: emotionBounce 0.4s ease;
+    }
+    @keyframes emotionBounce {
+      0% { transform: scale(1); }
+      30% { transform: scale(0.9); }
+      60% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
 
     /* Input bar */
     #input-bar {
@@ -181,6 +190,29 @@
       border-radius: 10px; font-size: 14px; cursor: pointer;
     }
     #settings-save:hover { background: #f06292; }
+
+    .settings-divider {
+      height: 1px; background: #eee; margin: 8px 0;
+    }
+    #emotion-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px; margin-bottom: 8px;
+    }
+    .emotion-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 8px; background: #f9f9f9;
+      border-radius: 8px; font-size: 12px;
+    }
+    .emotion-item img {
+      width: 32px; height: 32px; object-fit: contain;
+      border-radius: 4px; background: #eee;
+    }
+    .emotion-item .no-img {
+      width: 32px; height: 32px; display: flex;
+      align-items: center; justify-content: center;
+      background: #eee; border-radius: 4px;
+      font-size: 10px; color: #bbb;
+    }
   </style>
 </head>
 <body>
@@ -212,6 +244,15 @@
         <textarea id="cfg-prompt" rows="3" placeholder="Describe your pet's personality..."></textarea>
         <label>Voice Language</label>
         <input id="cfg-lang" type="text" placeholder="zh-TW" />
+
+        <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Emotion Artwork</label>
+        <p style="font-size:11px;color:#999;margin:2px 0 6px;">
+          Place images in the <code>assets/</code> folder named by emotion:<br>
+          happy.png, sad.png, angry.png, shy.png, surprised.png, thinking.png, sleepy.png, neutral.png
+        </p>
+        <div id="emotion-grid"></div>
+
         <button id="settings-save">儲存 / Save</button>
       </div>
     </div>

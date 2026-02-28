@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('mio', {
   chat: (message, history) => ipcRenderer.invoke('chat', message, history),
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
+  listEmotions: () => ipcRenderer.invoke('list-emotions'),
+  getAssetPath: (filename) => ipcRenderer.invoke('get-asset-path', filename),
 });

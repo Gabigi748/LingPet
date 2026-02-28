@@ -3,3 +3,4 @@ config.json
 dist/
 .DS_Store
 Thumbs.db
+assets/mio_backup.png

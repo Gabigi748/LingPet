@@ -9,6 +9,37 @@ let chatOpen = false;
 let chatHistory = [];
 let isRecording = false;
 let recognition = null;
+let emotionMap = {}; // emotion name -> asset file path
+const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
+const DEFAULT_EMOTION = 'neutral';
+
+// Parse emotion tag from AI reply
+function parseEmotion(text) {
+  const match = text.match(/^\[(\w+)\]\s*/);
+  if (match && EMOTIONS.includes(match[1])) {
+    return { emotion: match[1], cleanText: text.slice(match[0].length) };
+  }
+  return { emotion: DEFAULT_EMOTION, cleanText: text };
+}
+
+// Switch pet artwork based on emotion
+async function setEmotion(emotion) {
+  const assets = await window.mio.listEmotions();
+  const found = assets.find(a => a.name === emotion);
+  if (found) {
+    const assetPath = await window.mio.getAssetPath(found.file);
+    petImg.src = assetPath + '?t=' + Date.now();
+  } else {
+    // Fall back to default
+    const def = assets.find(a => a.name === 'default');
+    if (def) {
+      const assetPath = await window.mio.getAssetPath(def.file);
+      petImg.src = assetPath + '?t=' + Date.now();
+    }
+  }
+  petImg.classList.add('emotion-change');
+  setTimeout(() => petImg.classList.remove('emotion-change'), 400);
+}
 
 // Toggle chat on click
 petImg.addEventListener('click', (e) => {
@@ -30,14 +61,16 @@ async function sendMessage(text) {
   try {
     const reply = await window.mio.chat(text, chatHistory);
     thinkingEl.remove();
-    addMessage(reply, 'bot');
+    const { emotion, cleanText } = parseEmotion(reply);
+    addMessage(cleanText, 'bot');
+    setEmotion(emotion);
     chatHistory.push({ role: 'user', content: text });
     chatHistory.push({ role: 'assistant', content: reply });
-    // Keep history manageable
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
   } catch (e) {
     thinkingEl.remove();
     addMessage('連線失敗...', 'bot');
+    setEmotion('sad');
   }
 }
 
@@ -126,6 +159,24 @@ async function openSettings() {
   document.getElementById('cfg-name').value = cfg.pet?.name || '';
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
   document.getElementById('cfg-lang').value = cfg.voice?.lang || 'zh-TW';
+
+  // Load emotion artwork grid
+  const assets = await window.mio.listEmotions();
+  const grid = document.getElementById('emotion-grid');
+  grid.innerHTML = '';
+  for (const emo of EMOTIONS) {
+    const item = document.createElement('div');
+    item.className = 'emotion-item';
+    const found = assets.find(a => a.name === emo);
+    if (found) {
+      const p = await window.mio.getAssetPath(found.file);
+      item.innerHTML = `<img src="${p}" /><span>${emo}</span>`;
+    } else {
+      item.innerHTML = `<div class="no-img">?</div><span>${emo}</span>`;
+    }
+    grid.appendChild(item);
+  }
+
   settingsPanel.classList.add('show');
 }
 

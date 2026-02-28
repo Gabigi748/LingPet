@@ -103,6 +103,32 @@ lingpetforclaw/
 └── package.json
 ```
 
+## Emotion System
+
+LingPet automatically detects emotions in AI responses and switches artwork accordingly.
+
+### Supported Emotions
+
+| Emotion | Filename | When it triggers |
+|---------|----------|-----------------|
+| happy | `happy.png` | Cheerful, excited responses |
+| sad | `sad.png` | Disappointed, upset responses |
+| angry | `angry.png` | Frustrated, annoyed responses |
+| shy | `shy.png` | Embarrassed, bashful responses |
+| surprised | `surprised.png` | Shocked, amazed responses |
+| thinking | `thinking.png` | Pondering, analyzing responses |
+| sleepy | `sleepy.png` | Tired, idle responses |
+| neutral | `neutral.png` | Default, calm responses |
+
+### How It Works
+
+1. Place your emotion artwork in the `assets/` folder (e.g., `assets/happy.png`)
+2. The AI is instructed to tag each reply with an emotion like `[happy]`
+3. LingPet parses the tag and switches to the matching artwork
+4. If no matching artwork exists, it falls back to `default.png`
+
+Check the emotion artwork status in Settings → Emotion Artwork section.
+
 ## Roadmap
 
 - [ ] Emotion system — switch artwork based on AI response mood
