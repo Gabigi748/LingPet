@@ -14,6 +14,7 @@ let chatOpen = false;
 let chatHistory = [];
 let typingTimer = null;
 let isComposing = false; // For CJK input method
+let isSending = false; // Prevent double send
 const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
 const DEFAULT_EMOTION = 'neutral';
 
@@ -86,11 +87,26 @@ function parseEmotion(text) {
 // Clean internal directives from gateway responses
 function cleanReply(text) {
   // Remove sticker tags like [sticker:xxx]
-  text = text.replace(/\[sticker:\w+\]/g, '').trim();
-  // Remove lines that look like internal agent instructions
-  text = text.replace(/^(let me |reading |Read |HEARTBEAT|NO_REPLY|SOUL\.md|MEMORY\.md|AGENTS\.md|USER\.md).*$/gmi, '').trim();
+  text = text.replace(/\[sticker:[\w-]+\]/g, '').trim();
   // Remove reply tags
   text = text.replace(/\[\[reply_to[^\]]*\]\]/g, '').trim();
+  // Remove lines that look like internal agent instructions or errors
+  const filterPatterns = [
+    /^(let me |reading |Read |I'll |I need to |checking ).*/i,
+    /^(HEARTBEAT|NO_REPLY|SOUL\.md|MEMORY\.md|AGENTS\.md|USER\.md|TOOLS\.md|HEARTBEAT\.md).*/,
+    /^message failed:.*/i,
+    /^action send.*/i,
+    /^requires a target.*/i,
+    /^\[System.*/,
+    /^Source: .*/,
+  ];
+  const lines = text.split('\n');
+  const cleaned = lines.filter(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+    return !filterPatterns.some(p => p.test(trimmed));
+  });
+  text = cleaned.join('\n').trim();
   return text || '...';
 }
 
@@ -113,7 +129,8 @@ async function setEmotion(emotion) {
 
 // ========== Send Message ==========
 async function sendMessage(text) {
-  if (!text.trim()) return;
+  if (!text.trim() || isSending) return;
+  isSending = true;
   msgInput.value = '';
 
   // Add to history
@@ -138,10 +155,14 @@ async function sendMessage(text) {
 
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+    isSending = false;
   } catch (e) {
     const cfg = await window.mio.getConfig();
     dialogName.textContent = cfg.pet?.name || 'Pet';
     typewrite('Connection failed...');
+    setEmotion('sad');
+    isSending = false;
+  }
     setEmotion('sad');
   }
 }
