@@ -196,7 +196,7 @@ function callAPI(message, history = []) {
   });
 }
 
-// Call API with image (for screen recognition)
+// Call API with image - bypasses gateway, calls provider directly (gateway doesn't support image_url)
 function callAPIWithImage(message, imageDataUrl) {
   return new Promise((resolve, reject) => {
     const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
@@ -205,22 +205,25 @@ function callAPIWithImage(message, imageDataUrl) {
     const body = JSON.stringify({
       model: config.api?.model || 'gpt-4',
       messages: [{
+        role: 'system',
+        content: 'You are a cute desktop pet. Respond briefly in Traditional Chinese. Start with an emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Do NOT use [sticker:] tags.',
+      }, {
         role: 'user',
         content: [
           { type: 'text', text: message },
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
         ],
       }],
-      max_tokens: 512,
+      max_tokens: 256,
     });
 
-    const endpoint = config.api?.endpoint || '/v1/chat/completions';
-    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
+    // Always use provider URL directly for vision (not gateway)
+    const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'http://localhost:3000';
+    const url = new URL(providerBase + '/v1/chat/completions');
     const mod = url.protocol === 'https:' ? https : http;
 
     const headers = { 'Content-Type': 'application/json' };
     if (config.api?.apiKey) headers['Authorization'] = `Bearer ${config.api.apiKey}`;
-    if (config.api?.user) headers['X-User'] = config.api.user;
 
     const req = mod.request(url, { method: 'POST', headers }, (res) => {
       let data = '';

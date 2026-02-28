@@ -238,6 +238,7 @@ window.mio.onOpenSettings(() => openSettings());
 async function openSettings() {
   const cfg = await window.mio.getConfig();
   document.getElementById('cfg-url').value = cfg.api?.baseUrl || '';
+  document.getElementById('cfg-provider-url').value = cfg.api?.providerUrl || '';
   document.getElementById('cfg-endpoint').value = cfg.api?.endpoint || '/v1/chat/completions';
   document.getElementById('cfg-key').value = cfg.api?.apiKey || '';
   document.getElementById('cfg-model').value = cfg.api?.model || '';
@@ -271,6 +272,7 @@ settingsSave.addEventListener('click', async () => {
   const newConfig = {
     api: {
       baseUrl: document.getElementById('cfg-url').value,
+      providerUrl: document.getElementById('cfg-provider-url').value,
       endpoint: document.getElementById('cfg-endpoint').value,
       apiKey: document.getElementById('cfg-key').value,
       model: document.getElementById('cfg-model').value,
@@ -325,41 +327,47 @@ async function startScreenWatch() {
   if (screenWatchInterval) clearInterval(screenWatchInterval);
   screenWatchEnabled = true;
   
-  screenWatchInterval = setInterval(async () => {
-    if (!screenWatchEnabled || isSending) return;
-    try {
-      const screenshot = await window.mio.captureScreen();
-      if (!screenshot) return;
-      
-      const prompt = cfg.screenWatch?.prompt || 
-        'You are a desktop pet watching the user\'s screen. If you see something interesting, comment on it briefly and naturally in Traditional Chinese. If nothing notable, reply with just: [skip]';
-      
-      const reply = await window.mio.chatWithImage(prompt, screenshot);
-      if (!reply || reply.includes('[skip]') || reply.trim().length < 2) return;
-      
-      const { emotion, cleanText } = parseEmotion(reply);
-      const displayText = cleanReply(cleanText);
-      if (displayText === '...' || displayText === lastReply) return;
-      
-      lastReply = displayText;
-      
-      // Show dialog if hidden
-      if (!chatOpen) {
-        chatOpen = true;
-        dialogBox.classList.add('show');
-      }
-      
-      const petCfg = await window.mio.getConfig();
-      dialogName.textContent = petCfg.pet?.name || 'Pet';
-      typewrite(displayText);
-      setEmotion(emotion);
-      
-      chatHistory.push({ role: 'assistant', content: reply });
-      if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
-    } catch (e) {
-      console.log('Screen watch error:', e);
+  // Run immediately on start
+  doScreenWatch();
+  
+  screenWatchInterval = setInterval(() => doScreenWatch(), intervalMin * 60 * 1000);
+}
+
+async function doScreenWatch() {
+  if (!screenWatchEnabled || isSending) return;
+  try {
+    const screenshot = await window.mio.captureScreen();
+    if (!screenshot) return;
+    
+    const cfg = await window.mio.getConfig();
+    const prompt = cfg.screenWatch?.prompt || 
+      'You are a desktop pet watching the user\'s screen. If you see something interesting, comment on it briefly and naturally in Traditional Chinese. If nothing notable, reply with just: [skip]';
+    
+    const reply = await window.mio.chatWithImage(prompt, screenshot);
+    if (!reply || reply.includes('[skip]') || reply.trim().length < 2) return;
+    
+    const { emotion, cleanText } = parseEmotion(reply);
+    const displayText = cleanReply(cleanText);
+    if (displayText === '...' || displayText === lastReply) return;
+    
+    lastReply = displayText;
+    
+    // Show dialog if hidden
+    if (!chatOpen) {
+      chatOpen = true;
+      dialogBox.classList.add('show');
     }
-  }, intervalMin * 60 * 1000);
+    
+    const petCfg = await window.mio.getConfig();
+    dialogName.textContent = petCfg.pet?.name || 'Pet';
+    typewrite(displayText);
+    setEmotion(emotion);
+    
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+  } catch (e) {
+    console.log('Screen watch error:', e);
+  }
 }
 
 function stopScreenWatch() {
