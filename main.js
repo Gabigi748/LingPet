@@ -112,16 +112,17 @@ function createWindow() {
     return path.join(__dirname, 'assets', filename);
   });
 
-  // Screenshot capture for screen recognition
+  // Screenshot capture - get window titles for screen awareness
   ipcMain.handle('capture-screen', async () => {
     const sources = await desktopCapturer.getSources({
-      types: ['screen'],
-      thumbnailSize: { width: 1280, height: 720 },
+      types: ['window', 'screen'],
+      thumbnailSize: { width: 1, height: 1 }, // tiny, we only need titles
     });
-    if (sources.length > 0) {
-      return sources[0].thumbnail.toDataURL();
-    }
-    return null;
+    // Return list of window titles
+    const titles = sources
+      .map(s => s.name)
+      .filter(n => n && n.trim() && n !== 'Entire Screen' && !n.startsWith('Screen '));
+    return titles.length > 0 ? titles.join(', ') : null;
   });
 
   // Chat with image (for screen recognition)
@@ -199,29 +200,32 @@ function callAPI(message, history = []) {
 // Call API with image - bypasses gateway, calls provider directly (gateway doesn't support image_url)
 // Returns a text description of the image, to be passed to gateway for personality-aware response
 function callAPIWithImage(message, imageDataUrl) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
+    // Extract base64 and media type
     const base64 = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
     const mediaType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
 
+    // Try OpenAI-compatible format first (most providers support this)
     const body = JSON.stringify({
       model: config.api?.model || 'gpt-4',
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual. Focus on what the user is doing or viewing.' },
+          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' },
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
         ],
       }],
       max_tokens: 150,
     });
 
-    // Use provider URL directly for vision (not gateway)
-    const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'http://localhost:3000';
-    const url = new URL(providerBase + '/v1/chat/completions');
+    // Use gateway directly - let it handle the request
+    const endpoint = config.api?.endpoint || '/v1/chat/completions';
+    const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
     const mod = url.protocol === 'https:' ? https : http;
 
     const headers = { 'Content-Type': 'application/json' };
     if (config.api?.apiKey) headers['Authorization'] = `Bearer ${config.api.apiKey}`;
+    if (config.api?.user) headers['X-User'] = config.api.user + '-vision';
 
     const req = mod.request(url, { method: 'POST', headers }, (res) => {
       let data = '';
@@ -234,6 +238,7 @@ function callAPIWithImage(message, imageDataUrl) {
       });
     });
     req.on('error', () => resolve(null));
+    req.setTimeout(15000, () => { req.destroy(); resolve(null); });
     req.write(body);
     req.end();
   });
