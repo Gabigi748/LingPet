@@ -4,7 +4,6 @@ const dialogName = document.getElementById('dialog-name');
 const dialogText = document.getElementById('dialog-text');
 const msgInput = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
-const voiceBtn = null;
 const historyBtn = document.getElementById('history-btn');
 const historyOverlay = document.getElementById('history-overlay');
 const historyMessages = document.getElementById('history-messages');
@@ -162,8 +161,6 @@ async function sendMessage(text) {
     typewrite('Connection failed...');
     setEmotion('sad');
     isSending = false;
-  }
-    setEmotion('sad');
   }
 }
 
