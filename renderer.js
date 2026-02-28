@@ -1,47 +1,30 @@
 const petImg = document.getElementById('pet-img');
-const chatBubble = document.getElementById('chat-bubble');
-const inputBar = document.getElementById('input-bar');
+const dialogBox = document.getElementById('dialog-box');
+const dialogName = document.getElementById('dialog-name');
+const dialogText = document.getElementById('dialog-text');
 const msgInput = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
 const voiceBtn = document.getElementById('voice-btn');
+const historyBtn = document.getElementById('history-btn');
+const historyOverlay = document.getElementById('history-overlay');
+const historyMessages = document.getElementById('history-messages');
+const historyClose = document.getElementById('history-close');
 
 let chatOpen = false;
 let chatHistory = [];
 let isRecording = false;
 let recognition = null;
-let emotionMap = {}; // emotion name -> asset file path
+let typingTimer = null;
 const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
 const DEFAULT_EMOTION = 'neutral';
 
-// Parse emotion tag from AI reply
-function parseEmotion(text) {
-  const match = text.match(/^\[(\w+)\]\s*/);
-  if (match && EMOTIONS.includes(match[1])) {
-    return { emotion: match[1], cleanText: text.slice(match[0].length) };
-  }
-  return { emotion: DEFAULT_EMOTION, cleanText: text };
-}
+// ========== Pet Name from config ==========
+(async () => {
+  const cfg = await window.mio.getConfig();
+  dialogName.textContent = cfg.pet?.name || 'Pet';
+})();
 
-// Switch pet artwork based on emotion
-async function setEmotion(emotion) {
-  const assets = await window.mio.listEmotions();
-  const found = assets.find(a => a.name === emotion);
-  if (found) {
-    const assetPath = await window.mio.getAssetPath(found.file);
-    petImg.src = assetPath + '?t=' + Date.now();
-  } else {
-    // Fall back to default
-    const def = assets.find(a => a.name === 'default');
-    if (def) {
-      const assetPath = await window.mio.getAssetPath(def.file);
-      petImg.src = assetPath + '?t=' + Date.now();
-    }
-  }
-  petImg.classList.add('emotion-change');
-  setTimeout(() => petImg.classList.remove('emotion-change'), 400);
-}
-
-// Click vs drag detection on pet image
+// ========== Click vs Drag ==========
 let mouseDownTime = 0;
 let mouseDownPos = { x: 0, y: 0 };
 
@@ -62,8 +45,7 @@ petImg.addEventListener('mousedown', (e) => {
     const dist = Math.abs(ev.screenX - mouseDownPos.x) + Math.abs(ev.screenY - mouseDownPos.y);
     if (elapsed < 300 && dist < 10) {
       chatOpen = !chatOpen;
-      chatBubble.classList.toggle('show', chatOpen);
-      inputBar.classList.toggle('show', chatOpen);
+      dialogBox.classList.toggle('show', chatOpen);
       if (chatOpen) setTimeout(() => msgInput.focus(), 100);
     }
   };
@@ -71,57 +53,123 @@ petImg.addEventListener('mousedown', (e) => {
   document.addEventListener('mouseup', onUp);
 });
 
-// Send message
+// ========== Typewriter Effect ==========
+function typewrite(text, callback) {
+  if (typingTimer) clearInterval(typingTimer);
+  dialogText.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  typingTimer = setInterval(() => {
+    if (i < text.length) {
+      dialogText.textContent = text.slice(0, i + 1);
+      dialogText.appendChild(cursor);
+      i++;
+    } else {
+      clearInterval(typingTimer);
+      typingTimer = null;
+      cursor.remove();
+      if (callback) callback();
+    }
+  }, 35);
+}
+
+// ========== Emotion ==========
+function parseEmotion(text) {
+  const match = text.match(/^\[(\w+)\]\s*/);
+  if (match && EMOTIONS.includes(match[1])) {
+    return { emotion: match[1], cleanText: text.slice(match[0].length) };
+  }
+  return { emotion: DEFAULT_EMOTION, cleanText: text };
+}
+
+async function setEmotion(emotion) {
+  const assets = await window.mio.listEmotions();
+  const found = assets.find(a => a.name === emotion);
+  if (found) {
+    const p = await window.mio.getAssetPath(found.file);
+    petImg.src = p + '?t=' + Date.now();
+  } else {
+    const def = assets.find(a => a.name === 'default');
+    if (def) {
+      const p = await window.mio.getAssetPath(def.file);
+      petImg.src = p + '?t=' + Date.now();
+    }
+  }
+  petImg.classList.add('emotion-change');
+  setTimeout(() => petImg.classList.remove('emotion-change'), 400);
+}
+
+// ========== Send Message ==========
 async function sendMessage(text) {
   if (!text.trim()) return;
-  addMessage(text, 'user');
   msgInput.value = '';
 
-  const thinkingEl = addMessage('思考中...', 'thinking');
+  // Add to history
+  chatHistory.push({ role: 'user', content: text });
+
+  // Show thinking
+  dialogName.textContent = '...';
+  dialogText.innerHTML = '<span class="typing-cursor"></span>';
 
   try {
     const reply = await window.mio.chat(text, chatHistory);
-    thinkingEl.remove();
     const { emotion, cleanText } = parseEmotion(reply);
-    addMessage(cleanText, 'bot');
+
+    // Get pet name
+    const cfg = await window.mio.getConfig();
+    dialogName.textContent = cfg.pet?.name || 'Pet';
+
+    // Typewriter
+    typewrite(cleanText);
     setEmotion(emotion);
-    chatHistory.push({ role: 'user', content: text });
+
     chatHistory.push({ role: 'assistant', content: reply });
-    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
   } catch (e) {
-    thinkingEl.remove();
-    addMessage('連線失敗...', 'bot');
+    const cfg = await window.mio.getConfig();
+    dialogName.textContent = cfg.pet?.name || 'Pet';
+    typewrite('Connection failed...');
     setEmotion('sad');
   }
 }
 
-function addMessage(text, type) {
-  const div = document.createElement('div');
-  div.className = `chat-msg ${type}`;
-  div.textContent = text;
-  chatBubble.appendChild(div);
-  chatBubble.scrollTop = chatBubble.scrollHeight;
-  return div;
-}
-
-// Send button
 sendBtn.addEventListener('click', () => sendMessage(msgInput.value));
-
-// Enter key
 msgInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') sendMessage(msgInput.value);
 });
 
-// Voice input (Web Speech API)
+// ========== History ==========
+historyBtn.addEventListener('click', () => {
+  historyMessages.innerHTML = '';
+  chatHistory.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = `history-msg ${msg.role === 'user' ? 'user' : 'bot'}`;
+    const { cleanText } = msg.role === 'assistant' ? parseEmotion(msg.content) : { cleanText: msg.content };
+    div.innerHTML = `
+      <div class="h-name">${msg.role === 'user' ? 'You' : (dialogName.textContent || 'Pet')}</div>
+      <div class="h-text">${cleanText}</div>
+    `;
+    historyMessages.appendChild(div);
+  });
+  historyOverlay.classList.add('show');
+  historyMessages.scrollTop = historyMessages.scrollHeight;
+});
+
+historyClose.addEventListener('click', () => {
+  historyOverlay.classList.remove('show');
+});
+
+// ========== Voice Input ==========
 function initVoice() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    voiceBtn.title = '此裝置不支援語音輸入';
-    voiceBtn.style.opacity = '0.4';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    voiceBtn.style.opacity = '0.3';
+    voiceBtn.title = 'Voice not supported';
     return;
   }
-
-  recognition = new SpeechRecognition();
+  recognition = new SR();
   recognition.lang = 'zh-TW';
   recognition.continuous = false;
   recognition.interimResults = true;
@@ -137,7 +185,6 @@ function initVoice() {
       sendMessage(transcript);
     }
   };
-
   recognition.onerror = () => stopRecording();
   recognition.onend = () => stopRecording();
 }
@@ -146,31 +193,30 @@ function startRecording() {
   if (!recognition) return;
   isRecording = true;
   voiceBtn.classList.add('recording');
-  voiceBtn.textContent = '⏹';
   recognition.start();
 }
 
 function stopRecording() {
   isRecording = false;
   voiceBtn.classList.remove('recording');
-  voiceBtn.textContent = '🎤';
   try { recognition?.stop(); } catch {}
 }
 
 voiceBtn.addEventListener('click', () => {
+  if (!chatOpen) {
+    chatOpen = true;
+    dialogBox.classList.add('show');
+  }
   if (isRecording) stopRecording();
   else startRecording();
 });
 
-// Settings listener
-window.mio.onOpenSettings(() => {
-  openSettings();
-});
-
-// Settings panel
+// ========== Settings ==========
 const settingsPanel = document.getElementById('settings-panel');
 const settingsClose = document.getElementById('settings-close');
 const settingsSave = document.getElementById('settings-save');
+
+window.mio.onOpenSettings(() => openSettings());
 
 async function openSettings() {
   const cfg = await window.mio.getConfig();
@@ -183,7 +229,6 @@ async function openSettings() {
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
   document.getElementById('cfg-lang').value = cfg.voice?.lang || 'zh-TW';
 
-  // Load emotion artwork grid
   const assets = await window.mio.listEmotions();
   const grid = document.getElementById('emotion-grid');
   grid.innerHTML = '';
@@ -199,13 +244,10 @@ async function openSettings() {
     }
     grid.appendChild(item);
   }
-
   settingsPanel.classList.add('show');
 }
 
-settingsClose.addEventListener('click', () => {
-  settingsPanel.classList.remove('show');
-});
+settingsClose.addEventListener('click', () => settingsPanel.classList.remove('show'));
 
 settingsSave.addEventListener('click', async () => {
   const newConfig = {
@@ -226,8 +268,9 @@ settingsSave.addEventListener('click', async () => {
     },
   };
   await window.mio.saveConfig(newConfig);
+  dialogName.textContent = newConfig.pet.name || 'Pet';
   settingsPanel.classList.remove('show');
 });
 
-// Init
+// ========== Init ==========
 initVoice();
