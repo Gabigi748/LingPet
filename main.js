@@ -115,10 +115,19 @@ function createWindow() {
   // Screenshot capture - get window titles for screen awareness
   ipcMain.handle('capture-screen', async () => {
     console.log('[ScreenWatch] Capturing screen...');
+    
+    // Hide window before capture so pet doesn't appear in screenshot
+    if (mainWindow) mainWindow.hide();
+    await new Promise(r => setTimeout(r, 150)); // wait for hide to apply
+    
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
       thumbnailSize: { width: 1280, height: 720 },
     });
+    
+    // Restore window
+    if (mainWindow) mainWindow.showInactive();
+    
     if (sources.length > 0) {
       const dataUrl = sources[0].thumbnail.toDataURL();
       console.log('[ScreenWatch] Screenshot captured, size:', dataUrl.length);
