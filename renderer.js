@@ -41,13 +41,34 @@ async function setEmotion(emotion) {
   setTimeout(() => petImg.classList.remove('emotion-change'), 400);
 }
 
-// Toggle chat on click
-petImg.addEventListener('click', (e) => {
-  e.stopPropagation();
-  chatOpen = !chatOpen;
-  chatBubble.classList.toggle('show', chatOpen);
-  inputBar.classList.toggle('show', chatOpen);
-  if (chatOpen) msgInput.focus();
+// Click vs drag detection on pet image
+let mouseDownTime = 0;
+let mouseDownPos = { x: 0, y: 0 };
+
+petImg.addEventListener('mousedown', (e) => {
+  mouseDownTime = Date.now();
+  mouseDownPos = { x: e.screenX, y: e.screenY };
+  window.mio.startDrag();
+
+  const onMove = (ev) => {
+    window.mio.dragMove(ev.screenX, ev.screenY);
+  };
+  const onUp = (ev) => {
+    window.mio.dragEnd();
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+
+    const elapsed = Date.now() - mouseDownTime;
+    const dist = Math.abs(ev.screenX - mouseDownPos.x) + Math.abs(ev.screenY - mouseDownPos.y);
+    if (elapsed < 300 && dist < 10) {
+      chatOpen = !chatOpen;
+      chatBubble.classList.toggle('show', chatOpen);
+      inputBar.classList.toggle('show', chatOpen);
+      if (chatOpen) setTimeout(() => msgInput.focus(), 100);
+    }
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
 });
 
 // Send message

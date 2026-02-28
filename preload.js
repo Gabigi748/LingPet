@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld('mio', {
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
   listEmotions: () => ipcRenderer.invoke('list-emotions'),
   getAssetPath: (filename) => ipcRenderer.invoke('get-asset-path', filename),
+  startDrag: () => ipcRenderer.send('start-drag'),
+  dragMove: (x, y) => ipcRenderer.send('drag-move', x, y),
+  dragEnd: () => ipcRenderer.send('drag-end'),
 });

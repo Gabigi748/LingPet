@@ -52,6 +52,24 @@ function createWindow() {
     mainWindow.setIgnoreMouseEvents(ignore, { forward: true });
   });
 
+  // Window drag handler
+  let dragOffset = null;
+  ipcMain.on('start-drag', () => {
+    const [wx, wy] = mainWindow.getPosition();
+    const cursor = require('electron').screen.getCursorScreenPoint();
+    dragOffset = { x: cursor.x - wx, y: cursor.y - wy };
+  });
+
+  ipcMain.on('drag-move', (_, x, y) => {
+    if (dragOffset) {
+      mainWindow.setPosition(x - dragOffset.x, y - dragOffset.y);
+    }
+  });
+
+  ipcMain.on('drag-end', () => {
+    dragOffset = null;
+  });
+
   // Chat API handler
   ipcMain.handle('chat', async (_, message, history) => {
     return callAPI(message, history);
