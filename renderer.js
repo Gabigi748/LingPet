@@ -15,6 +15,7 @@ let chatHistory = [];
 let isRecording = false;
 let recognition = null;
 let typingTimer = null;
+let isComposing = false; // For CJK input method
 const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
 const DEFAULT_EMOTION = 'neutral';
 
@@ -84,6 +85,17 @@ function parseEmotion(text) {
   return { emotion: DEFAULT_EMOTION, cleanText: text };
 }
 
+// Clean internal directives from gateway responses
+function cleanReply(text) {
+  // Remove sticker tags like [sticker:xxx]
+  text = text.replace(/\[sticker:\w+\]/g, '').trim();
+  // Remove lines that look like internal agent instructions
+  text = text.replace(/^(let me |reading |Read |HEARTBEAT|NO_REPLY|SOUL\.md|MEMORY\.md|AGENTS\.md|USER\.md).*$/gmi, '').trim();
+  // Remove reply tags
+  text = text.replace(/\[\[reply_to[^\]]*\]\]/g, '').trim();
+  return text || '...';
+}
+
 async function setEmotion(emotion) {
   const assets = await window.mio.listEmotions();
   const found = assets.find(a => a.name === emotion);
@@ -116,13 +128,14 @@ async function sendMessage(text) {
   try {
     const reply = await window.mio.chat(text, chatHistory);
     const { emotion, cleanText } = parseEmotion(reply);
+    const displayText = cleanReply(cleanText);
 
     // Get pet name
     const cfg = await window.mio.getConfig();
     dialogName.textContent = cfg.pet?.name || 'Pet';
 
     // Typewriter
-    typewrite(cleanText);
+    typewrite(displayText);
     setEmotion(emotion);
 
     chatHistory.push({ role: 'assistant', content: reply });
@@ -136,8 +149,13 @@ async function sendMessage(text) {
 }
 
 sendBtn.addEventListener('click', () => sendMessage(msgInput.value));
+
+// CJK input method composing detection
+msgInput.addEventListener('compositionstart', () => { isComposing = true; });
+msgInput.addEventListener('compositionend', () => { isComposing = false; });
+
 msgInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendMessage(msgInput.value);
+  if (e.key === 'Enter' && !isComposing) sendMessage(msgInput.value);
 });
 
 // ========== History ==========
@@ -166,7 +184,10 @@ function initVoice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     voiceBtn.style.opacity = '0.3';
-    voiceBtn.title = 'Voice not supported';
+    voiceBtn.title = 'Voice input is not supported in this environment';
+    voiceBtn.addEventListener('click', () => {
+      dialogText.textContent = 'Voice input is not available in Electron. Please type instead.';
+    });
     return;
   }
   recognition = new SR();
@@ -185,7 +206,14 @@ function initVoice() {
       sendMessage(transcript);
     }
   };
-  recognition.onerror = () => stopRecording();
+  recognition.onerror = (e) => {
+    console.log('Speech error:', e.error);
+    stopRecording();
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      dialogText.textContent = 'Voice input is not available in Electron. Please type instead.';
+      voiceBtn.style.opacity = '0.3';
+    }
+  };
   recognition.onend = () => stopRecording();
 }
 
