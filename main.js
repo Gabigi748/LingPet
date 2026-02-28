@@ -137,8 +137,7 @@ function callAPI(message, history = []) {
     let body;
     if (isGateway) {
       // Gateway mode: just send the message, gateway manages session/history
-      // Add hint to not use stickers (desktop pet doesn't support them)
-      const hint = '[Context: This message is from the desktop pet app. Do not use [sticker:] tags or emoji stickers in your reply. Reply with plain text only. Keep replies concise.]';
+      const hint = '[Context: This message is from the desktop pet app. IMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags\n2. Start every reply with exactly one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]\n3. Example: "[happy] 好開心呀！"\n4. Keep replies concise, plain text only.]';
       body = JSON.stringify({
         model: config.api?.model || 'gpt-4',
         messages: [{ role: 'user', content: hint + '\n' + message }],
