@@ -15,7 +15,7 @@ let typingTimer = null;
 let isComposing = false; // For CJK input method
 let isSending = false; // Prevent double send
 let lastReply = ''; // Prevent duplicate replies
-const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral'];
+const EMOTIONS = ['happy', 'sad', 'angry', 'shy', 'surprised', 'thinking', 'sleepy', 'neutral', 'confused', 'serious'];
 const DEFAULT_EMOTION = 'neutral';
 
 // ========== Pet Name from config ==========
@@ -505,6 +505,8 @@ async function doScreenWatch() {
     typewrite(displayText);
     setEmotion(emotion);
     
+    // Save both sides to chatHistory so user messages remember context
+    chatHistory.push({ role: 'user', content: `（看了一眼螢幕）${screenDesc}` });
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
   } catch (e) {
