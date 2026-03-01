@@ -152,7 +152,7 @@ function callAPI(message, history = []) {
     let body;
     if (isGateway) {
       // Gateway mode: just send the message, gateway manages session/history
-      const hint = '[Context: This message is from the desktop pet app. IMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags\n2. Start every reply with exactly one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]\n3. Example: "[happy] 好開心呀！"\n4. Keep replies concise, plain text only.]';
+      const hint = '[Context: This message is from the desktop pet app. IMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags\n2. Start every reply with exactly one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]\n3. Example: "[happy] 好開心呀！"\n4. Keep replies concise, plain text only.]';
       body = JSON.stringify({
         model: config.api?.model || 'gpt-4',
         messages: [{ role: 'user', content: hint + '\n' + message }],
@@ -160,7 +160,7 @@ function callAPI(message, history = []) {
       });
     } else {
       // Direct API mode: send full history
-      const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral]. Example: "[happy] 好開心呀！". Always include exactly one tag at the very start.';
+      const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]. Example: "[happy] 好開心呀！". Always include exactly one tag at the very start.';
       body = JSON.stringify({
         model: config.api?.model || 'gpt-4',
         messages: [
