@@ -9,8 +9,10 @@ Give your AI assistant a face — drop in your own artwork, connect to your Open
 - **Transparent desktop pet** — always-on-top, draggable, lives on your desktop
 - **Galgame-style chat UI** — semi-transparent dialog box overlays the pet naturally
 - **Chat with your AI** — click the pet to open a chat bubble, powered by OpenClaw Gateway
-- **Emotion system** — pet artwork changes based on AI response mood, auto-resets after 5 seconds
+- **Emotion system** — pet artwork changes based on AI response mood (10 emotions), auto-resets after 5 seconds
 - **Screen Watch** — pet periodically screenshots your screen and comments on what you're doing
+- **Head Pat** — click the top area of the pet to pat its head and get a cute reaction!
+- **Click-through mode** — mouse passes through to windows below by default; only the pet and dialog are interactive
 - **Custom artwork** — use any PNG/image as your pet's appearance, plus emotion variants
 - **Breathing animation** — subtle idle animation when the pet is resting
 - **Settings UI** — configure everything in-app via the ⚙ gear button, no code editing needed
@@ -22,8 +24,8 @@ Give your AI assistant a face — drop in your own artwork, connect to your Open
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/Gabigi748/lingpetforclaw.git
-cd lingpetforclaw
+git clone https://github.com/Gabigi748/LingPet.git
+cd LingPet
 npm install
 ```
 
@@ -73,7 +75,8 @@ This way your desktop pet shares the same session as your other OpenClaw interfa
 
 | Action | What happens |
 |--------|-------------|
-| **Click** the pet | Toggle chat bubble |
+| **Click** the pet (body) | Toggle chat bubble |
+| **Click** the pet's head (top ~30%) | Head pat — pet reacts! |
 | **Drag** the pet | Move it around your desktop |
 | **Type + Enter** | Send a text message |
 | **⚙ button** in dialog | Open settings panel |
@@ -83,10 +86,12 @@ This way your desktop pet shares the same session as your other OpenClaw interfa
 
 LingPet automatically detects emotion tags in AI responses and switches artwork accordingly. Emotions auto-reset to `default` after 5 seconds.
 
+The app injects emotion instructions into every API call, so any AI model connected through OpenClaw will use these tags automatically — no extra setup needed.
+
 ### Supported Emotions
 
 | Emotion | Filename | When it triggers |
-|---------|----------|-----------------| 
+|---------|----------|-----------------|
 | happy | `happy.png` | Cheerful, excited responses |
 | sad | `sad.png` | Disappointed, upset responses |
 | angry | `angry.png` | Frustrated, annoyed responses |
@@ -95,8 +100,18 @@ LingPet automatically detects emotion tags in AI responses and switches artwork 
 | thinking | `thinking.png` | Pondering, analyzing responses |
 | sleepy | `sleepy.png` | Tired, idle responses |
 | neutral | `neutral.png` | Default, calm responses |
+| confused | `confused.png` | Puzzled, unsure responses |
+| serious | `serious.png` | Focused, serious responses |
 
 Place emotion artwork in the `assets/` folder. Missing emotions fall back to `default.png`.
+
+## Click-Through & Interaction Zone
+
+By default, mouse clicks pass through the pet window to whatever is beneath it. Only the pet image and dialog box capture mouse events.
+
+You can fine-tune this in **Settings**:
+- **Interaction Padding** — extra px around the pet image that is clickable (default: 10px)
+- **Head Zone** — top % of the pet image that triggers head pat instead of chat (default: 30%)
 
 ## Screen Watch
 
@@ -121,11 +136,13 @@ LingPet can periodically take a screenshot of your screen and comment on what yo
 ## Project Structure
 
 ```
-lingpetforclaw/
+LingPet/
 ├── assets/
 │   ├── default.png        # Main pet artwork
 │   ├── happy.png          # Optional emotion variants
 │   ├── sad.png
+│   ├── confused.png
+│   ├── serious.png
 │   └── ...
 ├── main.js                # Electron main process + API calls
 ├── preload.js             # Context bridge (secure IPC)
@@ -138,12 +155,13 @@ lingpetforclaw/
 
 ## Roadmap
 
-- [x] Emotion system — switch artwork based on AI response mood
+- [x] Emotion system — 10 emotions, switch artwork based on AI response mood
 - [x] Screen Watch — pet comments on what you're doing
+- [x] Head Pat — click the head area for a cute reaction
+- [x] Click-through mode — configurable interaction zone
 - [x] Breathing idle animation
 - [x] Window position memory
 - [x] Semi-transparent overlaid dialog box
-- [ ] Packaging — .dmg / .exe builds
 - [ ] Auto-start on boot
 - [ ] Live2D support — animated pet models
 
