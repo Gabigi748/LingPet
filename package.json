@@ -1,16 +1,67 @@
 {
-  "name": "mio-pet",
+  "name": "lingpet",
+  "productName": "LingPet",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI Desktop Pet - Your companion on the desktop",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "desktop-pet",
+    "ai",
+    "electron"
+  ],
+  "author": "Gabigi748",
+  "license": "MIT",
+  "build": {
+    "appId": "com.gabigi748.lingpet",
+    "productName": "LingPet",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "assets/**/*",
+      "config.example.json",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/default.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/default.png",
+      "uninstallerIcon": "assets/default.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/default.png",
+      "category": "public.app-category.entertainment"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/default.png",
+      "category": "Utility"
+    }
+  },
   "devDependencies": {
-    "electron": "^40.6.1"
+    "electron": "^40.6.1",
+    "electron-builder": "^25.1.8"
   }
 }
