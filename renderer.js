@@ -93,7 +93,7 @@ async function triggerHeadpat() {
   // Send to API
   isSending = true;
   const cfg = await window.mio.getConfig();
-  const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral].\nKeep reply concise, plain text only.]\n';
+  const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious].\nKeep reply concise, plain text only.]\n';
   const prompt = hint + '（爸爸摸了摸你的頭）請用可愛的語氣回應被摸頭的感覺，簡短一句話就好';
 
   try {
@@ -483,7 +483,7 @@ async function doScreenWatch() {
     
     // Step 3: Send description to gateway (has memory + personality)
     console.log('Sending description to gateway...');
-    const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral].\nKeep reply concise, plain text only.]\n';
+    const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious].\nKeep reply concise, plain text only.]\n';
     const prompt = hint + `你看了一眼爸爸的螢幕，看到：${screenDesc}\n請用小澪的口吻自然地說一句話（如果沒什麼特別的就說 [skip]）`;
     
     const reply = await window.mio.chat(prompt, []);
