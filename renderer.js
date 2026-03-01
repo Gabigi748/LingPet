@@ -24,18 +24,123 @@ const DEFAULT_EMOTION = 'neutral';
   dialogName.textContent = cfg.pet?.name || 'Pet';
 })();
 
-// ========== Click-through Mode ==========
-// Default: mouse passes through to windows below
-// On hover over pet or dialog: restore interactivity
-document.addEventListener('mouseenter', () => {
-  window.mio.setIgnoreMouse(false);
+// ========== Click-through Mode with Interaction Zone ==========
+let interactPadding = 10; // px padding around pet image
+let headpatZone = 30; // top % of pet image = head area
+let isMouseInteractive = false;
+
+// Load interaction config
+(async () => {
+  const cfg = await window.mio.getConfig();
+  interactPadding = cfg.interaction?.padding ?? 10;
+  headpatZone = cfg.interaction?.headpatZone ?? 30;
+})();
+
+function isInInteractiveZone(e) {
+  // Always interactive when panels are open
+  if (chatOpen || document.getElementById('settings-panel').classList.contains('show') 
+      || document.getElementById('history-overlay').classList.contains('show')) {
+    return true;
+  }
+  // Check if mouse is over pet image (with padding)
+  const rect = petImg.getBoundingClientRect();
+  const x = e.clientX, y = e.clientY;
+  if (x >= rect.left - interactPadding && x <= rect.right + interactPadding &&
+      y >= rect.top - interactPadding && y <= rect.bottom + interactPadding) {
+    return true;
+  }
+  // Check if over dialog box
+  const dRect = dialogBox.getBoundingClientRect();
+  if (dialogBox.classList.contains('show') &&
+      x >= dRect.left && x <= dRect.right && y >= dRect.top && y <= dRect.bottom) {
+    return true;
+  }
+  return false;
+}
+
+document.addEventListener('mousemove', (e) => {
+  const shouldBeInteractive = isInInteractiveZone(e);
+  if (shouldBeInteractive !== isMouseInteractive) {
+    isMouseInteractive = shouldBeInteractive;
+    window.mio.setIgnoreMouse(!shouldBeInteractive);
+  }
 });
+
 document.addEventListener('mouseleave', () => {
-  // Only re-enable click-through if dialog is closed
-  if (!chatOpen && !settingsPanel.classList.contains('show') && !historyOverlay.classList.contains('show')) {
+  if (isMouseInteractive) {
+    isMouseInteractive = false;
     window.mio.setIgnoreMouse(true);
   }
 });
+
+// ========== Head Pat ==========
+let headpatCooldown = false;
+
+function isInHeadZone(e) {
+  const rect = petImg.getBoundingClientRect();
+  const relY = (e.clientY - rect.top) / rect.height;
+  return relY >= 0 && relY <= headpatZone / 100;
+}
+
+async function triggerHeadpat() {
+  if (headpatCooldown || isSending) return;
+  headpatCooldown = true;
+  setTimeout(() => { headpatCooldown = false; }, 3000); // 3s cooldown
+
+  // Show heart particles
+  showHeadpatEffect();
+
+  // Send to API
+  isSending = true;
+  const cfg = await window.mio.getConfig();
+  const hint = '[Context: This message is from the desktop pet app. Do NOT use [sticker:] tags.\nStart reply with one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral].\nKeep reply concise, plain text only.]\n';
+  const prompt = hint + '（爸爸摸了摸你的頭）請用可愛的語氣回應被摸頭的感覺，簡短一句話就好';
+
+  try {
+    const reply = await window.mio.chat(prompt, chatHistory);
+    const { emotion, cleanText } = parseEmotion(reply);
+    const displayText = cleanReply(cleanText);
+    lastReply = displayText;
+
+    dialogName.textContent = cfg.pet?.name || 'Pet';
+    if (!chatOpen) {
+      chatOpen = true;
+      dialogBox.classList.add('show');
+    }
+    typewrite(displayText);
+    setEmotion(emotion);
+
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+  } catch (e) {
+    dialogName.textContent = cfg.pet?.name || 'Pet';
+    typewrite('Mmm~');
+    setEmotion('shy');
+  }
+  isSending = false;
+}
+
+function showHeadpatEffect() {
+  const rect = petImg.getBoundingClientRect();
+  for (let i = 0; i < 5; i++) {
+    const heart = document.createElement('div');
+    heart.textContent = '\u2764';
+    heart.style.cssText = `
+      position: fixed; pointer-events: none; z-index: 999;
+      font-size: ${14 + Math.random() * 10}px; color: #ff6b9d;
+      left: ${rect.left + rect.width * (0.2 + Math.random() * 0.6)}px;
+      top: ${rect.top + rect.height * 0.15}px;
+      opacity: 1; transition: all 1s ease-out;
+    `;
+    document.body.appendChild(heart);
+    setTimeout(() => {
+      heart.style.top = (rect.top - 30 - Math.random() * 40) + 'px';
+      heart.style.opacity = '0';
+      heart.style.transform = `translateX(${(Math.random() - 0.5) * 40}px)`;
+    }, 50);
+    setTimeout(() => heart.remove(), 1100);
+  }
+}
 
 // ========== Click vs Drag ==========
 let mouseDownTime = 0;
@@ -57,9 +162,14 @@ petImg.addEventListener('mousedown', (e) => {
     const elapsed = Date.now() - mouseDownTime;
     const dist = Math.abs(ev.screenX - mouseDownPos.x) + Math.abs(ev.screenY - mouseDownPos.y);
     if (elapsed < 300 && dist < 10) {
-      chatOpen = !chatOpen;
-      dialogBox.classList.toggle('show', chatOpen);
-      if (chatOpen) setTimeout(() => msgInput.focus(), 100);
+      // Check if click is in head zone → headpat
+      if (isInHeadZone(ev)) {
+        triggerHeadpat();
+      } else {
+        chatOpen = !chatOpen;
+        dialogBox.classList.toggle('show', chatOpen);
+        if (chatOpen) setTimeout(() => msgInput.focus(), 100);
+      }
     }
   };
   document.addEventListener('mousemove', onMove);
@@ -261,6 +371,8 @@ async function openSettings() {
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
   document.getElementById('cfg-screen-enabled').checked = cfg.screenWatch?.enabled || false;
   document.getElementById('cfg-screen-interval').value = cfg.screenWatch?.intervalMin || 5;
+  document.getElementById('cfg-interact-padding').value = cfg.interaction?.padding ?? 10;
+  document.getElementById('cfg-headpat-zone').value = cfg.interaction?.headpatZone ?? 30;
 
   const assets = await window.mio.listEmotions();
   const grid = document.getElementById('emotion-grid');
@@ -305,9 +417,17 @@ settingsSave.addEventListener('click', async () => {
       enabled: document.getElementById('cfg-screen-enabled').checked,
       intervalMin: parseInt(document.getElementById('cfg-screen-interval').value) || 5,
     },
+    interaction: {
+      padding: parseInt(document.getElementById('cfg-interact-padding').value) || 10,
+      headpatZone: parseInt(document.getElementById('cfg-headpat-zone').value) || 30,
+    },
   };
   await window.mio.saveConfig(newConfig);
   dialogName.textContent = newConfig.pet.name || 'Pet';
+  
+  // Update interaction zone runtime values
+  interactPadding = newConfig.interaction.padding;
+  headpatZone = newConfig.interaction.headpatZone;
   
   // Toggle screen watch
   if (newConfig.screenWatch.enabled) {

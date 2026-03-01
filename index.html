@@ -373,6 +373,21 @@
         <label>Interval (minutes)</label>
         <input id="cfg-screen-interval" type="number" min="1" max="60" value="5" style="width:80px;" />
         <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Interaction Zone</label>
+        <p style="font-size:11px;color:#999;margin:2px 0 6px;">
+          Only the pet image and dialog are clickable. Areas outside pass through to windows below.<br>
+          Adjust the clickable padding around the pet image (px).
+        </p>
+        <label>Interaction Padding (px)</label>
+        <input id="cfg-interact-padding" type="number" min="0" max="100" value="10" style="width:80px;" />
+        <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Head Pat</label>
+        <p style="font-size:11px;color:#999;margin:2px 0 6px;">
+          Click the top area of the pet to pat its head! Adjust how much of the image counts as "head".
+        </p>
+        <label>Head Zone (top % of pet image)</label>
+        <input id="cfg-headpat-zone" type="number" min="10" max="60" value="30" style="width:80px;" />
+        <div class="settings-divider"></div>
         <label style="font-weight:bold;font-size:13px;">Emotion Artwork</label>
         <p style="font-size:11px;color:#999;margin:2px 0 6px;">
           Place images in <code>assets/</code> folder named by emotion:<br>
