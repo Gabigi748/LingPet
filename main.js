@@ -58,7 +58,9 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
-  mainWindow.setIgnoreMouseEvents(false);
+  // Default: click-through mode (mouse passes to windows below)
+  // Renderer toggles this on hover over interactive elements
+  mainWindow.setIgnoreMouseEvents(true, { forward: true });
 
   ipcMain.on('set-ignore-mouse', (_, ignore) => {
     mainWindow.setIgnoreMouseEvents(ignore, { forward: true });

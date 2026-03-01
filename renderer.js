@@ -24,6 +24,19 @@ const DEFAULT_EMOTION = 'neutral';
   dialogName.textContent = cfg.pet?.name || 'Pet';
 })();
 
+// ========== Click-through Mode ==========
+// Default: mouse passes through to windows below
+// On hover over pet or dialog: restore interactivity
+document.addEventListener('mouseenter', () => {
+  window.mio.setIgnoreMouse(false);
+});
+document.addEventListener('mouseleave', () => {
+  // Only re-enable click-through if dialog is closed
+  if (!chatOpen && !settingsPanel.classList.contains('show') && !historyOverlay.classList.contains('show')) {
+    window.mio.setIgnoreMouse(true);
+  }
+});
+
 // ========== Click vs Drag ==========
 let mouseDownTime = 0;
 let mouseDownPos = { x: 0, y: 0 };
