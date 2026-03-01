@@ -347,6 +347,11 @@
         <input id="cfg-url" type="text" placeholder="http://localhost:3000" />
         <label>Provider URL (for screen watch, bypasses gateway)</label>
         <input id="cfg-provider-url" type="text" placeholder="https://your-api-provider.com" />
+        <label>Vision API Format</label>
+        <select id="cfg-api-format" style="background:#2a2a2a;color:#fff;border:1px solid #555;padding:6px 8px;border-radius:6px;font-size:13px;">
+          <option value="anthropic">Anthropic (/v1/messages)</option>
+          <option value="openai">OpenAI (/v1/chat/completions)</option>
+        </select>
         <label>API Endpoint</label>
         <input id="cfg-endpoint" type="text" placeholder="/v1/chat/completions" />
         <label>API Key (leave empty for gateway)</label>

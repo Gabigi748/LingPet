@@ -216,31 +216,51 @@ function callAPIWithImage(message, imageDataUrl) {
     const mediaType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
 
     const providerBase = config.api?.providerUrl || config.api?.baseUrl || 'https://www.fucheers.top';
-    const targetUrl = providerBase + '/v1/messages';
-    console.log('[ScreenWatch] Calling vision API:', targetUrl);
+    const apiFormat = config.api?.apiFormat || 'anthropic';
+    const isAnthropic = apiFormat === 'anthropic';
+
+    const targetUrl = providerBase + (isAnthropic ? '/v1/messages' : '/v1/chat/completions');
+    console.log('[ScreenWatch] Calling vision API:', targetUrl, '(format:', apiFormat + ')');
     console.log('[ScreenWatch] Using model:', config.api?.model || 'claude-opus-4-6');
     console.log('[ScreenWatch] API key set:', !!(config.api?.apiKey));
 
-    const body = JSON.stringify({
-      model: config.api?.model || 'claude-opus-4-6',
-      system: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.',
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          { type: 'text', text: 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' }
-        ],
-      }],
-      max_tokens: 150,
-    });
+    const descPrompt = 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.';
+    const model = config.api?.model || 'claude-opus-4-6';
+
+    let body;
+    if (isAnthropic) {
+      body = JSON.stringify({
+        model,
+        system: descPrompt,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: descPrompt }
+          ],
+        }],
+        max_tokens: 150,
+      });
+    } else {
+      // OpenAI format
+      body = JSON.stringify({
+        model,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
+            { type: 'text', text: descPrompt }
+          ],
+        }],
+        max_tokens: 150,
+      });
+    }
 
     const url = new URL(targetUrl);
     const mod = url.protocol === 'https:' ? https : http;
 
-    const headers = { 
-      'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01'
-    };
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAnthropic) headers['anthropic-version'] = '2023-06-01';
     if (config.api?.apiKey) {
       headers['x-api-key'] = config.api.apiKey;
       headers['Authorization'] = `Bearer ${config.api.apiKey}`;
@@ -254,9 +274,16 @@ function callAPIWithImage(message, imageDataUrl) {
         console.log('[ScreenWatch] Vision API raw response:', data.substring(0, 200));
         try {
           const json = JSON.parse(data);
-          // Handle extended thinking: find the text block (not thinking block)
-          const textBlock = json.content?.find(b => b.type === 'text');
-          resolve(textBlock?.text || null);
+          let text = null;
+          if (isAnthropic) {
+            // Anthropic: find text block (skip thinking blocks)
+            const textBlock = json.content?.find(b => b.type === 'text');
+            text = textBlock?.text || null;
+          } else {
+            // OpenAI: choices[0].message.content
+            text = json.choices?.[0]?.message?.content || null;
+          }
+          resolve(text);
         } catch { resolve(null); }
       });
     });
@@ -268,6 +295,7 @@ function callAPIWithImage(message, imageDataUrl) {
     req.end();
   });
 }
+
 
 function createTray() {
   tray = new Tray(path.join(__dirname, 'assets', 'default.png'));

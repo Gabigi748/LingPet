@@ -239,6 +239,7 @@ async function openSettings() {
   const cfg = await window.mio.getConfig();
   document.getElementById('cfg-url').value = cfg.api?.baseUrl || '';
   document.getElementById('cfg-provider-url').value = cfg.api?.providerUrl || '';
+  document.getElementById('cfg-api-format').value = cfg.api?.apiFormat || 'anthropic';
   document.getElementById('cfg-endpoint').value = cfg.api?.endpoint || '/v1/chat/completions';
   document.getElementById('cfg-key').value = cfg.api?.apiKey || '';
   document.getElementById('cfg-model').value = cfg.api?.model || '';
@@ -273,6 +274,7 @@ settingsSave.addEventListener('click', async () => {
     api: {
       baseUrl: document.getElementById('cfg-url').value,
       providerUrl: document.getElementById('cfg-provider-url').value,
+      apiFormat: document.getElementById('cfg-api-format').value,
       endpoint: document.getElementById('cfg-endpoint').value,
       apiKey: document.getElementById('cfg-key').value,
       model: document.getElementById('cfg-model').value,

@@ -104,13 +104,14 @@ LingPet can periodically take a screenshot of your screen and comment on what yo
 
 **How it works:**
 1. Takes a screenshot (pet window is hidden during capture)
-2. Sends the screenshot to your vision-capable AI provider (Anthropic Messages API format)
+2. Sends the screenshot to your vision-capable AI provider (supports Anthropic and OpenAI formats)
 3. Gets a text description of the screen
 4. Sends the description to OpenClaw Gateway for a personality-aware response
 5. Pet pops up and comments naturally
 
 **Setup in Settings:**
-- **Provider URL** — vision API base URL (e.g. `https://www.fucheers.top`)
+- **Provider URL** — vision API base URL (e.g. `https://www.fucheers.top` or `https://api.openai.com`)
+- **Vision API Format** — choose `Anthropic (/v1/messages)` or `OpenAI (/v1/chat/completions)`
 - **API Key** — your vision provider API key
 - **Screen Watch** — toggle on/off
 - **Interval** — how often to check (in minutes)
