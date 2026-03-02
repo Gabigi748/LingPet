@@ -4,6 +4,7 @@ const dialogName = document.getElementById('dialog-name');
 const dialogText = document.getElementById('dialog-text');
 const msgInput = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
+const newChatBtn = document.getElementById('new-chat-btn');
 const historyBtn = document.getElementById('history-btn');
 const historyOverlay = document.getElementById('history-overlay');
 const historyMessages = document.getElementById('history-messages');
@@ -331,6 +332,16 @@ msgInput.addEventListener('keydown', (e) => {
 });
 
 // ========== History ==========
+// ========== New Chat ==========
+newChatBtn.addEventListener('click', async () => {
+  chatHistory = [];
+  lastReply = '';
+  const cfg = await window.mio.getConfig();
+  dialogName.textContent = cfg.pet?.name || 'Pet';
+  typewrite('新對話開始囉！有什麼想聊的嗎？');
+  setEmotion('happy');
+});
+
 historyBtn.addEventListener('click', () => {
   historyMessages.innerHTML = '';
   chatHistory.forEach(msg => {
