@@ -15,6 +15,7 @@ Give your AI assistant a face — drop in your own artwork, connect to your Open
 - **Click-through mode** — mouse passes through to windows below by default; only the pet and dialog are interactive
 - **Custom artwork** — use any PNG/image as your pet's appearance, plus emotion variants
 - **Breathing animation** — subtle idle animation when the pet is resting
+- **New Chat button** — 🔄 reset conversation history anytime to start fresh
 - **Settings UI** — configure everything in-app via the ⚙ gear button, no code editing needed
 - **Window position memory** — pet remembers where you placed it between sessions
 - **Cross-platform** — works on macOS and Windows
@@ -79,6 +80,7 @@ This way your desktop pet shares the same session as your other OpenClaw interfa
 | **Click** the pet's head (top ~30%) | Head pat — pet reacts! |
 | **Drag** the pet | Move it around your desktop |
 | **Type + Enter** | Send a text message |
+| **🔄 button** in dialog | Start a new chat (clears history) |
 | **⚙ button** in dialog | Open settings panel |
 | **Tray icon → Quit** | Close the app |
 
