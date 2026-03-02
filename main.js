@@ -151,11 +151,15 @@ function callAPI(message, history = []) {
 
     let body;
     if (isGateway) {
-      // Gateway mode: just send the message, gateway manages session/history
-      const hint = '[Context: This message is from the desktop pet app. IMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags\n2. Start every reply with exactly one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]\n3. Example: "[happy] 好開心呀！"\n4. Keep replies concise, plain text only.]';
+      // Gateway mode: send full history so the model remembers context
+      const emotionInstruction = '\n\nIMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags\n2. Start every reply with exactly one emotion tag: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]\n3. Example: "[happy] 好開心呀！"\n4. Keep replies concise, plain text only.';
       body = JSON.stringify({
         model: config.api?.model || 'gpt-4',
-        messages: [{ role: 'user', content: hint + '\n' + message }],
+        messages: [
+          { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
+          ...history,
+          { role: 'user', content: message },
+        ],
         max_tokens: 1024,
       });
     } else {
