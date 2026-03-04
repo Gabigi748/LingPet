@@ -201,7 +201,9 @@ function callAPI(message, history = []) {
       res.on('end', () => {
         try {
           const json = JSON.parse(data);
-          const reply = json.choices?.[0]?.message?.content || '（小澪沒聽懂...）';
+          let reply = json.choices?.[0]?.message?.content || '（小澪沒聽懂...）';
+          // Remove [sticker:xxx] tags for desktop pet
+          reply = reply.replace(/\[sticker:[^\]]+\]/g, '').trim();
           resolve(reply);
         } catch (e) {
           reject('回覆解析失敗');
