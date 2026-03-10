@@ -33,6 +33,27 @@ function loadConfig() {
 
 let config = loadConfig();
 
+// Scan assets folder for available emotion artworks
+let availableEmotions = ['neutral']; // fallback
+function scanEmotions() {
+  const dir = path.join(__dirname, 'assets');
+  if (!fs.existsSync(dir)) return;
+  const files = fs.readdirSync(dir).filter(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
+  const names = files
+    .map(f => f.replace(/\.[^.]+$/, ''))
+    .filter(n => n !== 'default' && n !== 'mio_backup'); // skip non-emotion files
+  if (names.length > 0) {
+    availableEmotions = names;
+  }
+  console.log('[Emotions] Available:', availableEmotions.join(', '));
+}
+scanEmotions();
+
+function getEmotionInstruction() {
+  const emotionList = availableEmotions.map(e => `[${e}]`).join(' ');
+  return `\n\nIMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags (like [sticker:heart_eyes_cat])\n2. Start every reply with EXACTLY ONE emotion tag from this list ONLY: ${emotionList}\n3. Do NOT use any emotion names not in the list above.\n4. Example: "[${availableEmotions[0]}] 好開心呀！"\n5. Keep replies concise, plain text only.`;
+}
+
 function createWindow() {
   const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
   const savedPos = loadWindowPosition();
@@ -147,34 +168,16 @@ function createWindow() {
 
 function callAPI(message, history = []) {
   return new Promise((resolve, reject) => {
-    const isGateway = (config.api?.endpoint || '').includes('gateway');
-
-    let body;
-    if (isGateway) {
-      // Gateway mode: send full history so the model remembers context
-      const emotionInstruction = '\n\nIMPORTANT RULES for this reply:\n1. Do NOT use [sticker:] tags (like [sticker:heart_eyes_cat])\n2. Start every reply with EXACTLY ONE emotion tag from this list ONLY: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]\n3. Do NOT use any other emotion names like [question_anime], [pitiful_cat], [shocked_cat], etc.\n4. Example: "[happy] 好開心呀！"\n5. Keep replies concise, plain text only.';
-      body = JSON.stringify({
-        model: config.api?.model || 'gpt-4',
-        messages: [
-          { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
-          ...history,
-          { role: 'user', content: message },
-        ],
-        max_tokens: 1024,
-      });
-    } else {
-      // Direct API mode: send full history
-      const emotionInstruction = '\n\nIMPORTANT: Start every reply with an emotion tag in brackets. Available emotions ONLY: [happy] [sad] [angry] [shy] [surprised] [thinking] [sleepy] [neutral] [confused] [serious]. Do NOT use other names like [question_anime], [pitiful_cat], [shocked_cat]. Example: "[happy] 好開心呀！". Always include exactly one tag from the list at the very start.';
-      body = JSON.stringify({
-        model: config.api?.model || 'gpt-4',
-        messages: [
-          { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
-          ...history,
-          { role: 'user', content: message },
-        ],
-        max_tokens: 1024,
-      });
-    }
+    const emotionInstruction = getEmotionInstruction();
+    let body = JSON.stringify({
+      model: config.api?.model || 'gpt-4',
+      messages: [
+        { role: 'system', content: (config.pet?.systemPrompt || 'You are a helpful desktop pet.') + emotionInstruction },
+        ...history,
+        { role: 'user', content: message },
+      ],
+      max_tokens: 1024,
+    });
 
     const endpoint = config.api?.endpoint || '/v1/chat/completions';
     const url = new URL((config.api?.baseUrl || 'http://localhost:3000') + endpoint);
