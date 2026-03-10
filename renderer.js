@@ -35,7 +35,33 @@ let isMouseInteractive = false;
   const cfg = await window.mio.getConfig();
   interactPadding = cfg.interaction?.padding ?? 10;
   headpatZone = cfg.interaction?.headpatZone ?? 30;
+  applyLayout(cfg);
 })();
+
+function applyLayout(cfg) {
+  const layout = cfg.layout?.dialogPosition || 'below';
+  const offset = cfg.layout?.petOffset || 0;
+  const scale = cfg.layout?.petScale || 100;
+
+  // Dialog position
+  const container = document.getElementById('pet-container');
+  container.classList.remove('layout-above');
+  if (layout === 'above') {
+    container.classList.add('layout-above');
+  }
+
+  // Character offset & scale
+  petImg.style.transform = '';
+  petImg.style.marginBottom = offset < 0 ? '0' : offset + 'px';
+  petImg.style.marginTop = offset < 0 ? Math.abs(offset) + 'px' : '0';
+  if (scale !== 100) {
+    petImg.style.maxWidth = (280 * scale / 100) + 'px';
+    petImg.style.maxHeight = (480 * scale / 100) + 'px';
+  } else {
+    petImg.style.maxWidth = '280px';
+    petImg.style.maxHeight = '480px';
+  }
+}
 
 function isInInteractiveZone(e) {
   // Always interactive when panels are open
@@ -384,6 +410,9 @@ async function openSettings() {
   document.getElementById('cfg-screen-interval').value = cfg.screenWatch?.intervalMin || 5;
   document.getElementById('cfg-interact-padding').value = cfg.interaction?.padding ?? 10;
   document.getElementById('cfg-headpat-zone').value = cfg.interaction?.headpatZone ?? 30;
+  document.getElementById('cfg-layout').value = cfg.layout?.dialogPosition || 'below';
+  document.getElementById('cfg-pet-offset').value = cfg.layout?.petOffset || 0;
+  document.getElementById('cfg-pet-scale').value = cfg.layout?.petScale || 100;
 
   const assets = await window.mio.listEmotions();
   const grid = document.getElementById('emotion-grid');
@@ -432,6 +461,11 @@ settingsSave.addEventListener('click', async () => {
       padding: parseInt(document.getElementById('cfg-interact-padding').value) || 10,
       headpatZone: parseInt(document.getElementById('cfg-headpat-zone').value) || 30,
     },
+    layout: {
+      dialogPosition: document.getElementById('cfg-layout').value || 'below',
+      petOffset: parseInt(document.getElementById('cfg-pet-offset').value) || 0,
+      petScale: parseInt(document.getElementById('cfg-pet-scale').value) || 100,
+    },
   };
   await window.mio.saveConfig(newConfig);
   dialogName.textContent = newConfig.pet.name || 'Pet';
@@ -439,6 +473,9 @@ settingsSave.addEventListener('click', async () => {
   // Update interaction zone runtime values
   interactPadding = newConfig.interaction.padding;
   headpatZone = newConfig.interaction.headpatZone;
+  
+  // Apply layout changes
+  applyLayout(newConfig);
   
   // Toggle screen watch
   if (newConfig.screenWatch.enabled) {

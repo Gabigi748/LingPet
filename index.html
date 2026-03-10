@@ -23,6 +23,21 @@
       justify-content: flex-end;
       position: relative;
     }
+    /* Layout: dialog above character */
+    #pet-container.layout-above {
+      justify-content: flex-end;
+    }
+    #pet-container.layout-above #dialog-box {
+      position: relative;
+      bottom: auto;
+      order: -1;
+      border-radius: 0 0 12px 12px;
+      border-top: none;
+      border-bottom: 1.5px solid rgba(180,160,255,0.3);
+    }
+    #pet-container.layout-above #pet-img {
+      order: 1;
+    }
 
     /* Pet image */
     #pet-img {
@@ -388,6 +403,20 @@
         </p>
         <label>Head Zone (top % of pet image)</label>
         <input id="cfg-headpat-zone" type="number" min="10" max="60" value="30" style="width:80px;" />
+        <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Layout</label>
+        <p style="font-size:11px;color:#999;margin:2px 0 6px;">
+          Adjust the position of the character and dialog box.
+        </p>
+        <label>Dialog Position</label>
+        <select id="cfg-layout" style="border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;">
+          <option value="below">Below character (default)</option>
+          <option value="above">Above character</option>
+        </select>
+        <label>Character Vertical Offset (px, negative = up)</label>
+        <input id="cfg-pet-offset" type="number" min="-200" max="200" value="0" style="width:100px;" />
+        <label>Character Scale (%)</label>
+        <input id="cfg-pet-scale" type="number" min="30" max="200" value="100" style="width:100px;" />
         <div class="settings-divider"></div>
         <label style="font-weight:bold;font-size:13px;">Emotion Artwork</label>
         <p style="font-size:11px;color:#999;margin:2px 0 6px;">
