@@ -123,13 +123,6 @@ function createWindow() {
     saveWindowPosition(snapX, snapY);
   });
 
-  // Opacity control from renderer (mouse proximity fade)
-  ipcMain.on('set-opacity', (_, opacity) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.setOpacity(Math.max(0.15, Math.min(1, opacity)));
-    }
-  });
-
   // Mini mode toggle
   let miniMode = false;
   let normalSize = { width: config.pet?.width || 400, height: config.pet?.height || 600 };

@@ -85,48 +85,18 @@ function isInInteractiveZone(e) {
   return false;
 }
 
-// Mouse proximity opacity fade
-let currentOpacity = 1;
-function updateProximityOpacity(e) {
-  if (chatOpen || isMiniMode) return; // Don't fade when chatting or mini
-  const rect = petImg.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  const dist = Math.sqrt((e.clientX - cx) ** 2 + (e.clientY - cy) ** 2);
-  const fadeStart = 150; // start fading at this distance
-  const fadeEnd = 50;    // minimum opacity at this distance
-  let opacity;
-  if (dist > fadeStart) {
-    opacity = 1;
-  } else if (dist < fadeEnd) {
-    opacity = 0.3;
-  } else {
-    opacity = 0.3 + 0.7 * ((dist - fadeEnd) / (fadeStart - fadeEnd));
-  }
-  if (Math.abs(opacity - currentOpacity) > 0.02) {
-    currentOpacity = opacity;
-    window.mio.setOpacity(opacity);
-  }
-}
-
 document.addEventListener('mousemove', (e) => {
   const shouldBeInteractive = isInInteractiveZone(e);
   if (shouldBeInteractive !== isMouseInteractive) {
     isMouseInteractive = shouldBeInteractive;
     window.mio.setIgnoreMouse(!shouldBeInteractive);
   }
-  updateProximityOpacity(e);
 });
 
 document.addEventListener('mouseleave', () => {
   if (isMouseInteractive) {
     isMouseInteractive = false;
     window.mio.setIgnoreMouse(true);
-  }
-  // Restore full opacity when mouse leaves
-  if (currentOpacity < 1) {
-    currentOpacity = 1;
-    window.mio.setOpacity(1);
   }
 });
 
@@ -260,11 +230,6 @@ petImg.addEventListener('mousedown', (e) => {
           dialogBox.classList.toggle('show', chatOpen);
           if (chatOpen) {
             setTimeout(() => msgInput.focus(), 100);
-            // Restore opacity when chatting
-            if (currentOpacity < 1) {
-              currentOpacity = 1;
-              window.mio.setOpacity(1);
-            }
           }
         }
       }, 420);
