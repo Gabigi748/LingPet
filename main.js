@@ -103,9 +103,45 @@ function createWindow() {
 
   ipcMain.on('drag-end', () => {
     dragOffset = null;
-    // Save window position
+    // Snap to nearest screen edge if close enough
+    const SNAP_DISTANCE = 30;
     const [x, y] = mainWindow.getPosition();
-    saveWindowPosition(x, y);
+    const [w, h] = mainWindow.getSize();
+    const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+
+    let snapX = x, snapY = y;
+    // Snap to left/right
+    if (x < SNAP_DISTANCE) snapX = 0;
+    else if (x + w > screenW - SNAP_DISTANCE) snapX = screenW - w;
+    // Snap to top/bottom
+    if (y < SNAP_DISTANCE) snapY = 0;
+    else if (y + h > screenH - SNAP_DISTANCE) snapY = screenH - h;
+
+    if (snapX !== x || snapY !== y) {
+      mainWindow.setPosition(snapX, snapY);
+    }
+    saveWindowPosition(snapX, snapY);
+  });
+
+  // Opacity control from renderer (mouse proximity fade)
+  ipcMain.on('set-opacity', (_, opacity) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setOpacity(Math.max(0.15, Math.min(1, opacity)));
+    }
+  });
+
+  // Mini mode toggle
+  let miniMode = false;
+  let normalSize = { width: config.pet?.width || 400, height: config.pet?.height || 600 };
+  ipcMain.on('toggle-mini', () => {
+    miniMode = !miniMode;
+    if (miniMode) {
+      normalSize = { width: mainWindow.getSize()[0], height: mainWindow.getSize()[1] };
+      mainWindow.setSize(80, 80);
+    } else {
+      mainWindow.setSize(normalSize.width, normalSize.height);
+    }
+    mainWindow.webContents.send('mini-mode-changed', miniMode);
   });
 
   // Chat API handler
