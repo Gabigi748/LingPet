@@ -575,3 +575,28 @@ function stopScreenWatch() {
   const cfg = await window.mio.getConfig();
   if (cfg.screenWatch?.enabled) startScreenWatch();
 })();
+
+// ========== Proactive Interaction Engine ==========
+
+// Track user activity (mouse move, key press, click)
+['mousemove', 'keydown', 'click'].forEach(event => {
+  document.addEventListener(event, () => {
+    window.mio.reportActivity();
+  }, { passive: true });
+});
+
+// Receive proactive messages from main process
+window.mio.onProactiveMessage((data) => {
+  console.log('[Proactive] Received:', data);
+  const { message } = data;
+  if (!message) return;
+
+  // Show dialog with proactive message
+  if (!chatOpen) {
+    chatOpen = true;
+    dialogBox.classList.add('show');
+  }
+
+  // Display with typing effect
+  typeText(message);
+});

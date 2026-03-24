@@ -13,4 +13,6 @@ contextBridge.exposeInMainWorld('mio', {
   startDrag: () => ipcRenderer.send('start-drag'),
   dragMove: (x, y) => ipcRenderer.send('drag-move', x, y),
   dragEnd: () => ipcRenderer.send('drag-end'),
+  reportActivity: () => ipcRenderer.send('user-activity'),
+  onProactiveMessage: (cb) => ipcRenderer.on('proactive-message', (_, data) => cb(data)),
 });
