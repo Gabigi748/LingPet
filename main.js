@@ -107,20 +107,6 @@ function createWindow() {
     saveWindowPosition(x, y);
   });
 
-  // Mini mode toggle
-  let miniMode = false;
-  let normalSize = { width: config.pet?.width || 400, height: config.pet?.height || 600 };
-  ipcMain.on('toggle-mini', () => {
-    miniMode = !miniMode;
-    if (miniMode) {
-      normalSize = { width: mainWindow.getSize()[0], height: mainWindow.getSize()[1] };
-      mainWindow.setSize(80, 80);
-    } else {
-      mainWindow.setSize(normalSize.width, normalSize.height);
-    }
-    mainWindow.webContents.send('mini-mode-changed', miniMode);
-  });
-
   // Chat API handler
   ipcMain.handle('chat', async (_, message, history) => {
     return callAPI(message, history);

@@ -13,6 +13,4 @@ contextBridge.exposeInMainWorld('mio', {
   startDrag: () => ipcRenderer.send('start-drag'),
   dragMove: (x, y) => ipcRenderer.send('drag-move', x, y),
   dragEnd: () => ipcRenderer.send('drag-end'),
-  toggleMini: () => ipcRenderer.send('toggle-mini'),
-  onMiniModeChanged: (cb) => ipcRenderer.on('mini-mode-changed', (_, isMini) => cb(isMini)),
 });

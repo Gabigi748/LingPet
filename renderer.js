@@ -169,25 +169,9 @@ function showHeadpatEffect() {
   }
 }
 
-// ========== Mini Mode ==========
-let isMiniMode = false;
-
-window.mio.onMiniModeChanged((mini) => {
-  isMiniMode = mini;
-  const container = document.getElementById('pet-container');
-  if (mini) {
-    container.classList.add('mini-mode');
-    dialogBox.classList.remove('show');
-    chatOpen = false;
-  } else {
-    container.classList.remove('mini-mode');
-  }
-});
-
 // ========== Click vs Drag ==========
 let mouseDownTime = 0;
 let mouseDownPos = { x: 0, y: 0 };
-let lastClickTime = 0;
 
 petImg.addEventListener('mousedown', (e) => {
   mouseDownTime = Date.now();
@@ -205,34 +189,14 @@ petImg.addEventListener('mousedown', (e) => {
     const elapsed = Date.now() - mouseDownTime;
     const dist = Math.abs(ev.screenX - mouseDownPos.x) + Math.abs(ev.screenY - mouseDownPos.y);
     if (elapsed < 300 && dist < 10) {
-      const now = Date.now();
-      // Double click detection → toggle mini mode
-      if (now - lastClickTime < 400) {
-        window.mio.toggleMini();
-        lastClickTime = 0;
-        return;
+      // Check if click is in head zone → headpat
+      if (isInHeadZone(ev)) {
+        triggerHeadpat();
+      } else {
+        chatOpen = !chatOpen;
+        dialogBox.classList.toggle('show', chatOpen);
+        if (chatOpen) setTimeout(() => msgInput.focus(), 100);
       }
-      lastClickTime = now;
-
-      // Single click after delay (to distinguish from double click)
-      setTimeout(() => {
-        if (lastClickTime === 0) return; // was consumed by double click
-        if (isMiniMode) {
-          // In mini mode, single click expands back
-          window.mio.toggleMini();
-          return;
-        }
-        // Check if click is in head zone → headpat
-        if (isInHeadZone(ev)) {
-          triggerHeadpat();
-        } else {
-          chatOpen = !chatOpen;
-          dialogBox.classList.toggle('show', chatOpen);
-          if (chatOpen) {
-            setTimeout(() => msgInput.focus(), 100);
-          }
-        }
-      }, 420);
     }
   };
   document.addEventListener('mousemove', onMove);
