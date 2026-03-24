@@ -103,24 +103,8 @@ function createWindow() {
 
   ipcMain.on('drag-end', () => {
     dragOffset = null;
-    // Snap to nearest screen edge if close enough
-    const SNAP_DISTANCE = 30;
     const [x, y] = mainWindow.getPosition();
-    const [w, h] = mainWindow.getSize();
-    const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
-
-    let snapX = x, snapY = y;
-    // Snap to left/right
-    if (x < SNAP_DISTANCE) snapX = 0;
-    else if (x + w > screenW - SNAP_DISTANCE) snapX = screenW - w;
-    // Snap to top/bottom
-    if (y < SNAP_DISTANCE) snapY = 0;
-    else if (y + h > screenH - SNAP_DISTANCE) snapY = screenH - h;
-
-    if (snapX !== x || snapY !== y) {
-      mainWindow.setPosition(snapX, snapY);
-    }
-    saveWindowPosition(snapX, snapY);
+    saveWindowPosition(x, y);
   });
 
   // Mini mode toggle
