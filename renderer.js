@@ -413,6 +413,11 @@ async function openSettings() {
   document.getElementById('cfg-layout').value = cfg.layout?.dialogPosition || 'below';
   document.getElementById('cfg-pet-offset').value = cfg.layout?.petOffset || 0;
   document.getElementById('cfg-pet-scale').value = cfg.layout?.petScale || 100;
+  document.getElementById('cfg-proactive-enabled').checked = cfg.proactive?.enabled !== false;
+  document.getElementById('cfg-proactive-idle').value = cfg.proactive?.idleMinutes ?? 30;
+  document.getElementById('cfg-proactive-quiet-start').value = cfg.proactive?.quietStart ?? 23;
+  document.getElementById('cfg-proactive-quiet-end').value = cfg.proactive?.quietEnd ?? 7;
+  document.getElementById('cfg-proactive-latenight').checked = cfg.proactive?.lateNightWarning !== false;
 
   const assets = await window.mio.listEmotions();
   const grid = document.getElementById('emotion-grid');
@@ -465,6 +470,13 @@ settingsSave.addEventListener('click', async () => {
       dialogPosition: document.getElementById('cfg-layout').value || 'below',
       petOffset: parseInt(document.getElementById('cfg-pet-offset').value) || 0,
       petScale: parseInt(document.getElementById('cfg-pet-scale').value) || 100,
+    },
+    proactive: {
+      enabled: document.getElementById('cfg-proactive-enabled').checked,
+      idleMinutes: parseInt(document.getElementById('cfg-proactive-idle').value) || 30,
+      quietStart: parseInt(document.getElementById('cfg-proactive-quiet-start').value) ?? 23,
+      quietEnd: parseInt(document.getElementById('cfg-proactive-quiet-end').value) ?? 7,
+      lateNightWarning: document.getElementById('cfg-proactive-latenight').checked,
     },
   };
   await window.mio.saveConfig(newConfig);

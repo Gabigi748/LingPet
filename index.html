@@ -418,6 +418,27 @@
         <label>Character Scale (%)</label>
         <input id="cfg-pet-scale" type="number" min="30" max="200" value="100" style="width:100px;" />
         <div class="settings-divider"></div>
+        <label style="font-weight:bold;font-size:13px;">Proactive Interaction</label>
+        <p style="font-size:11px;color:#999;margin:2px 0 6px;">
+          Pet will greet you, check on you when idle, and remind you to sleep late at night.
+        </p>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+          <input id="cfg-proactive-enabled" type="checkbox" style="width:16px;height:16px;" />
+          <span style="font-size:12px;color:#666;">Enable proactive interaction</span>
+        </div>
+        <label>Idle threshold (minutes)</label>
+        <input id="cfg-proactive-idle" type="number" min="5" max="120" value="30" style="width:80px;" />
+        <label>Quiet hours (no disturbance)</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input id="cfg-proactive-quiet-start" type="number" min="0" max="23" value="23" style="width:60px;" />
+          <span style="font-size:12px;color:#666;">to</span>
+          <input id="cfg-proactive-quiet-end" type="number" min="0" max="23" value="7" style="width:60px;" />
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+          <input id="cfg-proactive-latenight" type="checkbox" style="width:16px;height:16px;" />
+          <span style="font-size:12px;color:#666;">Late night sleep reminder (even during quiet hours)</span>
+        </div>
+        <div class="settings-divider"></div>
         <label style="font-weight:bold;font-size:13px;">Emotion Artwork</label>
         <p style="font-size:11px;color:#999;margin:2px 0 6px;">
           Place images in <code>assets/</code> folder named by emotion:<br>
