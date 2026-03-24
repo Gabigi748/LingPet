@@ -35,8 +35,8 @@ async function generateProactiveMessage(trigger) {
   const prompts = {
     idle: `You are ${petName}. The user has been idle for a while. Say something short and cute to check on them. Keep it under 20 characters. Use the language matching your system prompt.`,
     morning: `You are ${petName}. It's morning! Give a short, cheerful good morning greeting. Keep it under 30 characters. Use the language matching your system prompt.`,
-    afternoon: `You are ${petName}. It's afternoon! Say something short and encouraging. Keep it under 20 characters. Use the language matching your system prompt.`,
-    evening: `You are ${petName}. It's evening! Say something warm and relaxing. Keep it under 20 characters. Use the language matching your system prompt.`,
+    afternoon: `You are ${petName}. It's afternoon! Say "下午好呀" and add something short and encouraging. Keep it under 25 characters. Use Traditional Chinese.`,
+    evening: `You are ${petName}. It's evening! Say "晚上好呀" and add something warm and relaxing. Keep it under 25 characters. Use Traditional Chinese.`,
     latenight: `You are ${petName}. It's very late at night! Gently remind the user to go to sleep. Keep it under 25 characters. Use the language matching your system prompt.`,
     work_long: `You are ${petName}. The user has been working for over 2 hours straight! Remind them to take a break. Keep it under 25 characters. Use the language matching your system prompt.`,
   };
@@ -53,8 +53,8 @@ async function generateProactiveMessage(trigger) {
     const fallbacks = {
       idle: '在嗎？',
       morning: '早安！',
-      afternoon: '加油！',
-      evening: '辛苦了～',
+      afternoon: '下午好呀',
+      evening: '晚上好呀',
       latenight: '該睡覺了喔！',
       work_long: '休息一下吧～',
     };
