@@ -45,8 +45,8 @@ async function generateProactiveMessage(trigger) {
 
   try {
     const reply = await callAPI(prompt, []);
-    // Clean up: remove emotion tags, keep just the text
-    return reply.replace(/^\[[^\]]+\]\s*/, '').trim();
+    // Keep the emotion tag intact - renderer will parse it
+    return reply;
   } catch (e) {
     console.log('[Proactive] API call failed:', e);
     // Fallback messages
