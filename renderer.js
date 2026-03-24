@@ -603,12 +603,24 @@ window.mio.onProactiveMessage((data) => {
   const { message } = data;
   if (!message) return;
 
-  // Show dialog with proactive message
+  // Parse emotion and update sprite
+  const { emotion, cleanText } = parseEmotion(message);
+  setEmotion(emotion);
+
+  // Show dialog
   if (!chatOpen) {
     chatOpen = true;
     dialogBox.classList.add('show');
   }
 
   // Display with typing effect
-  typeText(message);
+  typewrite(cleanText);
+
+  // Auto-hide after 10 seconds if user doesn't interact
+  setTimeout(() => {
+    if (chatOpen && dialogText.textContent === cleanText) {
+      chatOpen = false;
+      dialogBox.classList.remove('show');
+    }
+  }, 10000);
 });
