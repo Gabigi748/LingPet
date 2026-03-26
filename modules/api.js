@@ -63,7 +63,8 @@ function callAPIWithImage(message, imageDataUrl) {
     const targetUrl = providerBase + (isAnthropic ? '/v1/messages' : '/v1/chat/completions');
     console.log('[ScreenWatch] Calling vision API:', targetUrl, '(format:', apiFormat + ')');
 
-    const descPrompt = 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.';
+    const emotionInstruction = getEmotionInstruction();
+    const descPrompt = 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' + emotionInstruction;
     const model = config.api?.model || 'claude-opus-4-6';
 
     let body;
