@@ -403,6 +403,7 @@ async function openSettings() {
   document.getElementById('cfg-endpoint').value = cfg.api?.endpoint || '/v1/chat/completions';
   document.getElementById('cfg-key').value = cfg.api?.apiKey || '';
   document.getElementById('cfg-model').value = cfg.api?.model || '';
+  document.getElementById('cfg-vision-model').value = cfg.api?.visionModel || '';
   document.getElementById('cfg-user').value = cfg.api?.user || '';
   document.getElementById('cfg-name').value = cfg.pet?.name || '';
   document.getElementById('cfg-prompt').value = cfg.pet?.systemPrompt || '';
@@ -448,6 +449,7 @@ settingsSave.addEventListener('click', async () => {
       endpoint: document.getElementById('cfg-endpoint').value,
       apiKey: document.getElementById('cfg-key').value,
       model: document.getElementById('cfg-model').value,
+      visionModel: document.getElementById('cfg-vision-model').value,
       user: document.getElementById('cfg-user').value,
     },
     pet: {
