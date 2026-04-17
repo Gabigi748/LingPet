@@ -65,7 +65,7 @@ function callAPIWithImage(message, imageDataUrl) {
 
     const emotionInstruction = getEmotionInstruction();
     const descPrompt = 'Describe what you see on this screen in 1-2 sentences in Traditional Chinese. Be brief and factual.' + emotionInstruction;
-    const model = config.api?.model || 'claude-opus-4-6';
+    const model = config.api?.visionModel || config.api?.model || 'claude-opus-4-6';
 
     let body;
     if (isAnthropic) {
